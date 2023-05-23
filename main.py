@@ -14,9 +14,11 @@ def main():
     # Create agents
     agents = configuration.get_agents()
     sign_on_template = str(configuration.get_property('sign_on_template'))
-    project = str(configuration.get_property('project'))
+    project = str(configuration.get_project())
+    bot_string = str(configuration.get_property('bot_string'))
     for agent in agents:
-        new_agent = Agent(chat_api, agent['name'], agent['supervisor'], agent['role'], agent['mission'], project)
+        new_agent = Agent(chat_api, agent['name'], agent['supervisor'], agent['role'], 
+                          project, agent['further_guidance'], bot_string)
         reply = new_agent.sign_on(sign_on_template)
         active_agents.append(new_agent)
         print(reply)

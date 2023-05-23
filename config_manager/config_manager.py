@@ -61,3 +61,22 @@ class ConfigManager:
             return self.config[identifier]
         else:
             return None
+        
+
+    def get_project(self) -> str:
+        """
+        Returns the project name.
+        
+        Returns:
+            str: The project name.
+        """
+
+        response = ''
+
+        project = self.get_property('project')
+        if isinstance(project, dict) and 'name' in project and 'description' in project:
+            response += project['name']
+            response += ' - '
+            response += project['description']
+
+        return response
