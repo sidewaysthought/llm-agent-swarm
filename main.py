@@ -3,10 +3,11 @@ from chat_api.chat_api_tgwui import TgwuiApi
 from config_manager.config_manager import ConfigManager
 
 class AgentSwarm():
+    """
+    AgentSwarm is a collection of agents designed to complete a project or achieve a goal.
+    """
 
-    def __init__(self, 
-                 chat_api = TgwuiApi(), 
-                 configuration = ConfigManager()):
+    def __init__(self, chat_api = TgwuiApi(), configuration = ConfigManager()):
         
         """
         Constructor for AgentSwarm
