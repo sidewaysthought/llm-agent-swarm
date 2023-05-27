@@ -38,7 +38,9 @@ class Agent:
 
         # Attributes
         self.history = []
-        self.message_queue = []
+        self.outbound_queue = []
+        self.inbound_queue = []
+
 
     def sign_on(self,message_template:str = 'Agent <name> has signed on.'):
         """
@@ -46,8 +48,7 @@ class Agent:
         """
 
         message = self.fill_in_script(message_template)
-        reply = self.send_to_api(message)
-        self.add_to_message_queue(reply, self.profile['supervisor'])
+        self.add_to_inbound_queue(message, self.profile['supervisor'])
         
 
     def send_to_api(self, message) -> str:
@@ -61,11 +62,7 @@ class Agent:
             str: The response from the API.
         """
 
-        #self.history.append(message)
-        print(f"{Fore.GREEN}{self.profile['name']}{Style.RESET_ALL} sending to API")
         reply = self.chat_api.send(message, self.tokens)
-        print(f"{Fore.GREEN}{self.profile['name']}{Style.RESET_ALL} received from API")
-
         return reply
 
 
@@ -86,7 +83,7 @@ class Agent:
         return script
     
 
-    def add_to_message_queue(self, message:str, to:str|None = None):
+    def add_to_outbound_queue(self, message:str, to:str|None = None):
         """
         Adds a message to the message queue.
         
@@ -98,7 +95,24 @@ class Agent:
         new_message['message'] = message
         new_message['to'] = to
 
-        self.message_queue.append(message)
+        self.outbound_queue.append(new_message)
+
+
+    def add_to_inbound_queue(self, message:str, from_name:str):
+        """
+        Adds a message to the message queue.
+        
+        Args:
+            message (str): The message to add.
+            from_name (str): The name of the sender.
+        """
+
+        new_message = self.RESPONSE_TEMPLATE.copy()
+        new_message['message'] = message
+        new_message['from'] = from_name
+        new_message['to'] = self.profile['name']
+
+        self.inbound_queue.append(new_message)
 
     
     def deliver(self) -> list:
@@ -109,11 +123,11 @@ class Agent:
             list: The message queue.
         """
 
-        messages = self.message_queue
-        self.message_queue = []
+        messages = self.outbound_queue
+        self.outbound_queue = []
 
         for message in messages:
-            self.history.append(f"To: {str(message['to'])}, Message: {str(message['message'])}")
+            self.history.append(message)
 
         return messages
     
@@ -126,6 +140,15 @@ class Agent:
             message (str): The message to receive.
         """
 
-        message = "Sent from " + message['from'] + ": " + message['message']
+        self.inbound_queue.append(message)
 
-        self.send_to_api(message)
+
+    def interpret(self):
+        """
+        Interpret the message queue and add responses to the outbound queue.
+        """
+
+        for message in self.inbound_queue:
+            history_msg = f'{message["from"]} says: {message["message"]}'
+            reply = self.send_to_api(history_msg)
+            self.add_to_outbound_queue(reply, message['from'])

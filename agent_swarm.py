@@ -1,3 +1,4 @@
+import json
 import threading
 import queue
 from agent.agent import Agent
@@ -53,23 +54,26 @@ class AgentSwarm():
         ui_thread.start()
 
         while self.should_continue:
-            # Loop through agents in a dictionary and deliver messages
-            for name, agent in self.agents.items():
+
+            # Check for messages to deliver
+            for _, agent in self.agents.items():
                 messages = agent.deliver()
                 if messages:
                     for message in messages:
                         self.message_queue.put(message)
-                        
+            
+            # Deliver messages to the agent
             while not self.message_queue.empty():
                 message = self.message_queue.get()
-                print(
-                    f"{Fore.LIGHTYELLOW_EX}{message['from']}{Style.RESET_ALL}"
-                    f" -> {Fore.LIGHTBLUE_EX}{message['to']}{Style.RESET_ALL}:"
-                     " {message['text']}"
-                )
                 recipient_name = message['to']
+                self.display_message(message)
                 if recipient_name in self.agents:
                     self.agents[recipient_name].receive(message)
+
+            # Process messages from agents
+            for _, agent in self.agents.items():
+                print(f'Processing message queue for {Fore.YELLOW}{agent.profile["name"]}{Style.RESET_ALL}...')
+                messages = agent.interpret()
             
         ui_thread.join()
 
@@ -85,6 +89,16 @@ class AgentSwarm():
             clean_line = clean_line.lower()
             if clean_line == self.CMD_EXIT:
                 self.should_continue = False
+
+
+    def display_message(self, message_package):
+        """
+        Display a message to the user.
+        
+        Args:
+            message (dict): The message to display.
+        """
+        print(f'{Fore.GREEN}{message_package["from"]}{Style.RESET_ALL} -> {Fore.YELLOW}{message_package["to"]}{Style.RESET_ALL}: {message_package["message"]}')
 
 
     def create_agent(self, agent_definition) -> Agent:
