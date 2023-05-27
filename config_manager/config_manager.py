@@ -75,8 +75,7 @@ class ConfigManager:
 
         project = self.get_property('project')
         if isinstance(project, dict) and 'name' in project and 'description' in project:
-            response += project['name']
-            response += ' - '
-            response += project['description']
+            response = f"{project['name']} - {project['description']}"
+
 
         return response

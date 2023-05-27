@@ -2,27 +2,22 @@ from colorama import Fore, Back, Style
 
 class Agent:
 
-    def __init__(self, chat_api, name:str = 'Agent', supervisor:str = '', role:str = '', 
-                 project:str = '', further_guidance:str = '', bot_string:str = ''):
+    def __init__(self, chat_api, agent_profile, project:str = '', user_string:str = '', bot_string:str = ''):
 
         self.chat_api = chat_api
 
         # Agent information
-        self.name = name
-        self.supervisor = supervisor
-        self.role = role
-        self.project = project
-        self.further_guidance = further_guidance
-        self.bot_string = bot_string
+        self.profile = agent_profile
 
         # Set-up the template tokens
         self.tokens = {
-            'name': self.name,
-            'supervisor': self.supervisor,
-            'role': self.role,
-            'project': self.project,
-            'agentguidance': self.further_guidance,
-            'bot_string': self.bot_string
+            'guidance': self.profile['guidance'],
+            'name': self.profile['name'],
+            'supervisor': self.profile['supervisor'],
+            'role': self.profile['role'],
+            'project': project,
+            'bot_string': bot_string,
+            'user_string': user_string
         }
 
         # Attributes
