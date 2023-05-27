@@ -22,12 +22,10 @@ class TgwuiApi(ChatApi):
             'prompt': message,
             'temperature': float(temp)
         }
-        print(message)
         reply = requests.post(uri, json=post, timeout=timeout)
 
         if reply.status_code == 200:
             api_response = reply.json()
             response = api_response['results'][0]['text']
-            print(response)
 
         return response

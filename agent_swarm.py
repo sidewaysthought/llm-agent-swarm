@@ -1,6 +1,9 @@
+import threading
+import queue
 from agent.agent import Agent
 from chat_api.chat_api_tgwui import TgwuiApi
 from config_manager.config_manager import ConfigManager
+from colorama import Fore, Back, Style
 
 class AgentSwarm():
     """
@@ -17,6 +20,9 @@ class AgentSwarm():
             configuration (ConfigManager, optional): The configuration manager. Defaults to ConfigManager()
         """
 
+        # Constants
+        self.CMD_EXIT = 'exit'
+
         # Utilities and data
         self.chat_api = chat_api
         self.configuration = configuration
@@ -27,6 +33,58 @@ class AgentSwarm():
 
         # Agents
         self.agents = self.create_agents_fron_config()
+        self.dialog_queue = []
+
+        # Message queue management
+        self.message_queue = queue.Queue()
+        self.should_continue = True
+
+        self.start_loop()
+
+
+    def start_loop(self):
+
+        """
+        Loop through all agents and retrieve messages to deliver. If the user is the recipient, 
+        add to the dialog queue. If the user presses ESC, exit the loop.
+        """
+
+        ui_thread = threading.Thread(target=self.user_interface)
+        ui_thread.start()
+
+        while self.should_continue:
+            # Loop through agents in a dictionary and deliver messages
+            for name, agent in self.agents.items():
+                messages = agent.deliver()
+                if messages:
+                    for message in messages:
+                        self.message_queue.put(message)
+                        
+            while not self.message_queue.empty():
+                message = self.message_queue.get()
+                print(
+                    f"{Fore.LIGHTYELLOW_EX}{message['from']}{Style.RESET_ALL}"
+                    f" -> {Fore.LIGHTBLUE_EX}{message['to']}{Style.RESET_ALL}:"
+                     " {message['text']}"
+                )
+                recipient_name = message['to']
+                if recipient_name in self.agents:
+                    self.agents[recipient_name].receive(message)
+            
+        ui_thread.join()
+
+
+    def user_interface(self):
+        """
+        Handle user input from the main loop.
+        """
+
+        while self.should_continue:
+            line = input()
+            clean_line = line.strip()
+            clean_line = clean_line.lower()
+            if clean_line == self.CMD_EXIT:
+                self.should_continue = False
 
 
     def create_agent(self, agent_definition) -> Agent:
@@ -47,7 +105,7 @@ class AgentSwarm():
         return new_agent
 
 
-    def create_agents_fron_config(self) -> list:
+    def create_agents_fron_config(self) -> dict:
         """
         Creates the agents from the configuration file.
                     
@@ -55,11 +113,11 @@ class AgentSwarm():
             list: The list of agents.
         """
 
-        new_agents = []
+        new_agents = {}
         agents = self.configuration.get_agents()
         for agent in agents:
             new_agent = self.create_agent(agent)
-            new_agents.append(new_agent)
+            new_agents[new_agent.profile['name']] = new_agent
 
         return new_agents
 
