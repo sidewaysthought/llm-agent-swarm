@@ -4,7 +4,7 @@ from .chat_api import ChatApi
 
 class TgwuiApi(ChatApi):
 
-    def __init__(self, host:str, port:int):
+    def __init__(self, host:str = 'http://127.0.0.1', port:int = 5000):
 
         super().__init__(host, port)
 
