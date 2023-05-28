@@ -28,9 +28,11 @@ class Agent:
         self.RESPONSE_TEMPLATE = {
             "from": self.profile['name'],
             "to": None,
-            "message": None
+            "message": None,
+            'timestamp': None,
         }
         self.SYSTEM_USER = 'System'
+        self.TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
         # Set-up the template tokens
         self.replacement_strings = {
@@ -59,6 +61,7 @@ class Agent:
         self.system_prompt['message'] = self.fill_in_script(message_template, self.replacement_strings)
         self.system_prompt['to'] = self.profile['name']
         self.system_prompt['from'] = self.SYSTEM_USER
+        self.system_prompt['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
         self.add_to_inbound_queue(self.system_prompt['message'], self.profile['supervisor'])
         
 
@@ -117,6 +120,7 @@ class Agent:
         new_message['message'] = message
         new_message['to'] = to
         new_message['from'] = self.profile['name']
+        new_message['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
 
         if to not in self.outbound_queue:
             self.outbound_queue[to] = []
@@ -137,6 +141,7 @@ class Agent:
         new_message['message'] = message
         new_message['from'] = from_name
         new_message['to'] = self.profile['name']
+        new_message['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
 
         if from_name not in self.inbound_queue:
             self.inbound_queue[from_name] = []
@@ -160,6 +165,7 @@ class Agent:
                 ogm['message'] = message['message']
                 ogm['to'] = to_name
                 ogm['from'] = self.profile['name']
+                ogm['timestamp'] = message['timestamp']
                 self.memory.remember(ogm) # type: ignore
                 response.append(ogm)
             self.outbound_queue[to_name] = []
@@ -187,7 +193,6 @@ class Agent:
         """
 
         new_memory = message_obj.copy()
-        new_memory['datetime'] = datetime.datetime.now().isoformat()
         self.memory.remember(new_memory)
 
 

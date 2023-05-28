@@ -32,7 +32,7 @@ class MemoryManager:
             memory_uri = URIRef(self.namespace + memory_id)
             self.graph.add((memory_uri, self.namespace.from_name, Literal(message_obj["from"])))
             self.graph.add((memory_uri, self.namespace.to_name, Literal(message_obj["to"])))
-            self.graph.add((memory_uri, self.namespace.datetime, Literal(message_obj["datetime"])))
+            self.graph.add((memory_uri, self.namespace.timestamp, Literal(message_obj["timestamp"])))
             self.graph.add((memory_uri, self.namespace.message, Literal(message_obj["message"])))
             self.usage_counter[memory_id] = 0
 
