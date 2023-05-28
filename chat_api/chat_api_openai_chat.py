@@ -31,7 +31,7 @@ class OpenAIApiChat(ChatApi):
         openai.api_key = self.api_key
 
 
-    def send(self, message:str = '', max_tokens:int = 200, timeout:int = 120, temp:float= 0.5, model:str = 'gpt-3.5-turbo') -> str:
+    def send(self, message:str = '', max_tokens:int = 200, timeout:int = 120, temp:float= 0.5) -> str:
         """
         Send a chat message to the OpenAI API and return the response.
         
@@ -59,11 +59,10 @@ class OpenAIApiChat(ChatApi):
         ]
 
         reply = openai.ChatCompletion.create(
-            model=model,
+            model=self.model,
             messages=messages,
-            max_tokens=max_tokens,
-            timeout=timeout,
-            temperature=temp
+            timeout=int(timeout),
+            temperature=float(temp)
         )
 
         # Save the first text response to reply

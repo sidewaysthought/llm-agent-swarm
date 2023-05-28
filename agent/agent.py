@@ -1,3 +1,4 @@
+import json
 from colorama import Fore, Back, Style
 
 class Agent:
@@ -26,7 +27,7 @@ class Agent:
         }
 
         # Set-up the template tokens
-        self.tokens = {
+        self.replacement_strings = {
             'guidance': self.profile['guidance'],
             'name': self.profile['name'],
             'supervisor': self.profile['supervisor'],
@@ -38,8 +39,8 @@ class Agent:
 
         # Attributes
         self.history = []
-        self.outbound_queue = []
-        self.inbound_queue = []
+        self.outbound_queue = {}
+        self.inbound_queue = {}
 
 
     def sign_on(self,message_template:str = 'Agent <name> has signed on.'):
@@ -62,7 +63,7 @@ class Agent:
             str: The response from the API.
         """
 
-        reply = self.chat_api.send(message, self.tokens)
+        reply = self.chat_api.send(message=message)
         return reply
 
 
@@ -77,8 +78,8 @@ class Agent:
             str: The filled in script.
         """
 
-        for token in self.tokens:
-            script = script.replace(f'<{token}>', self.tokens[token])
+        for token in self.replacement_strings:
+            script = script.replace(f'<{token}>', self.replacement_strings[token])
 
         return script
     
@@ -94,8 +95,12 @@ class Agent:
         new_message = self.RESPONSE_TEMPLATE.copy()
         new_message['message'] = message
         new_message['to'] = to
+        new_message['from'] = self.profile['name']
 
-        self.outbound_queue.append(new_message)
+        if to not in self.outbound_queue:
+            self.outbound_queue[to] = []
+
+        self.outbound_queue[to].append(new_message)
 
 
     def add_to_inbound_queue(self, message:str, from_name:str):
@@ -112,7 +117,10 @@ class Agent:
         new_message['from'] = from_name
         new_message['to'] = self.profile['name']
 
-        self.inbound_queue.append(new_message)
+        if from_name not in self.inbound_queue:
+            self.inbound_queue[from_name] = []
+
+        self.inbound_queue[from_name].append(new_message)
 
     
     def deliver(self) -> list:
@@ -123,13 +131,17 @@ class Agent:
             list: The message queue.
         """
 
-        messages = self.outbound_queue
-        self.outbound_queue = []
+        response = []
 
-        for message in messages:
-            self.history.append(message)
+        for to_name in self.outbound_queue:
+            for message in self.outbound_queue[to_name]:
+                ogm = self.RESPONSE_TEMPLATE.copy()
+                ogm['message'] = message
+                ogm['to'] = to_name
+                ogm['from'] = self.profile['name']
+                response.append(ogm)
 
-        return messages
+        return response
     
 
     def receive(self, message:dict):
@@ -140,7 +152,7 @@ class Agent:
             message (str): The message to receive.
         """
 
-        self.inbound_queue.append(message)
+        self.add_to_inbound_queue(message['message'], message['from'])
 
 
     def interpret(self):
@@ -148,7 +160,13 @@ class Agent:
         Interpret the message queue and add responses to the outbound queue.
         """
 
-        for message in self.inbound_queue:
-            history_msg = f'{message["from"]} says: {message["message"]}'
-            reply = self.send_to_api(history_msg)
-            self.add_to_outbound_queue(reply, message['from'])
+        ogm = ''
+        for from_name in self.inbound_queue:
+            ogm += f'Conversation with {from_name}:\n\n'
+            for message in self.inbound_queue[from_name]:
+                ogm += message["message"] + '\n'
+            self.inbound_queue[from_name] = []
+            reply = self.send_to_api(ogm)
+            self.add_to_outbound_queue(reply, from_name)
+        
+        
