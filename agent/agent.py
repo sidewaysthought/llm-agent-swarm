@@ -136,7 +136,7 @@ class Agent:
         for to_name in self.outbound_queue:
             for message in self.outbound_queue[to_name]:
                 ogm = self.RESPONSE_TEMPLATE.copy()
-                ogm['message'] = message
+                ogm['message'] = message['message']
                 ogm['to'] = to_name
                 ogm['from'] = self.profile['name']
                 response.append(ogm)
