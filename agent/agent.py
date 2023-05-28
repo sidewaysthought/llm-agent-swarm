@@ -1,6 +1,3 @@
-import json
-from colorama import Fore, Back, Style
-
 class Agent:
 
     def __init__(self, chat_api, agent_profile, project:str = '', user_string:str = '', bot_string:str = ''):
@@ -38,7 +35,6 @@ class Agent:
         }
 
         # Attributes
-        self.history = []
         self.outbound_queue = {}
         self.inbound_queue = {}
 
@@ -140,6 +136,7 @@ class Agent:
                 ogm['to'] = to_name
                 ogm['from'] = self.profile['name']
                 response.append(ogm)
+            self.outbound_queue[to_name] = []
 
         return response
     
