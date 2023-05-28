@@ -3,7 +3,7 @@ from memory_manager.memory_manager import MemoryManager
 
 class Agent:
 
-    def __init__(self, chat_api, agent_profile, project:str = '', user_string:str = '', bot_string:str = ''):
+    def __init__(self, chat_api, agent_profile, project:str = '', user_string:str = '', bot_string:str = '', session_id:str = ''):
         """
         Constructor for Agent
 
@@ -18,7 +18,7 @@ class Agent:
         # Agent Foundation
         self.profile = agent_profile
         self.chat_api = chat_api
-        self.memory = MemoryManager()
+        self.session_id = session_id
 
         # Constants
         self.RESPONSE_TEMPLATE = {
@@ -39,6 +39,8 @@ class Agent:
         }
 
         # Attributes
+        self.name = self.profile['name']
+        self.memory = MemoryManager(self.name, self.session_id)
         self.outbound_queue = {}
         self.inbound_queue = {}
 
@@ -165,13 +167,8 @@ class Agent:
             message_obj (dict): The message object.
         """
 
-        new_memory = ''
-
-        date_time = datetime.datetime.utcnow().isoformat()
-        handle = message_obj['from'] + ' to ' + message_obj['to'] + ': '
-        message = message_obj['message']
-        new_memory = date_time + ' | ' + handle + message
-
+        new_memory = message_obj.copy()
+        new_memory['datetime'] = datetime.datetime.now().isoformat()
         self.memory.remember(new_memory)
 
 

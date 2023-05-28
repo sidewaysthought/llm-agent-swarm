@@ -1,6 +1,8 @@
 import json
 import threading
 import queue
+import secrets
+import string
 from agent.agent import Agent
 from chat_api.chat_api_tgwui import TgwuiApi
 from chat_api.chat_api_openai_completion import OpenAIApiCompletion
@@ -37,6 +39,7 @@ class AgentSwarm():
         self.bot_string = str(self.configuration.get_property('bot_string'))
         self.sign_on_template = str(self.configuration.get_property('sign_on_template'))
         self.project = str(self.configuration.get_project())
+        self.session_id = self.generate_session_id()
 
         # Agents
         self.agents = self.create_agents_fron_config()
@@ -47,6 +50,22 @@ class AgentSwarm():
         self.should_continue = True
 
         self.start_loop()
+
+
+    def generate_session_id(self) -> str:
+        """
+        Generate a session ID for the agents.
+        
+        Returns:
+            str: The session ID.
+        """
+
+        # Generate a session ID, 8 alphanumeric characters
+        
+
+        alphabet = string.ascii_letters + string.digits
+        session_id = ''.join(secrets.choice(alphabet) for i in range(8))
+        return session_id
 
 
     def start_loop(self):
@@ -130,7 +149,8 @@ class AgentSwarm():
             self.chat_api = TgwuiApi()
             
         # Create the agent
-        new_agent = Agent(self.chat_api, agent_definition, self.project, self.user_string, self.bot_string)
+        new_agent = Agent(chat_api=self.chat_api, agent_profile=agent_definition, project=self.project, 
+                          user_string=self.user_string, bot_string=self.bot_string, session_id=self.session_id)
         new_agent.sign_on(self.sign_on_template)
 
         return new_agent
