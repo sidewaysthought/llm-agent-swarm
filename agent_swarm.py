@@ -3,15 +3,18 @@ import threading
 import queue
 from agent.agent import Agent
 from chat_api.chat_api_tgwui import TgwuiApi
+from chat_api.chat_api_openai_completion import OpenAIApiCompletion
+from chat_api.chat_api_openai_chat import OpenAIApiChat
 from config_manager.config_manager import ConfigManager
 from colorama import Fore, Back, Style
+from dotenv import load_dotenv
 
 class AgentSwarm():
     """
     AgentSwarm is a collection of agents designed to complete a project or achieve a goal.
     """
 
-    def __init__(self, chat_api = TgwuiApi(), configuration = ConfigManager()):
+    def __init__(self, configuration = ConfigManager()):
         
         """
         Constructor for AgentSwarm
@@ -23,9 +26,12 @@ class AgentSwarm():
 
         # Constants
         self.CMD_EXIT = 'exit'
+        self.CHAT_API_TGWUI = 'tgwui'
+        self.CHAT_API_OPENAI_COMPLETION = 'openai_completion'
+        self.CHAT_API_OPENAI_CHAT = 'openai_chat'
 
         # Utilities and data
-        self.chat_api = chat_api
+        load_dotenv()
         self.configuration = configuration
         self.user_string = str(self.configuration.get_property('user_string'))
         self.bot_string = str(self.configuration.get_property('bot_string'))
@@ -112,7 +118,18 @@ class AgentSwarm():
             Agent: The agent.
         """
 
-        new_agent = {}
+        # Deal with Chat API
+        chat_driver = self.configuration.get_property('chat_api')
+        openai_model_agent = str(self.configuration.get_property('openai_model_agent'))
+        openai_model_completion = str(self.configuration.get_property('openai_model_completion'))
+        if chat_driver == self.CHAT_API_OPENAI_CHAT:
+            self.chat_api = OpenAIApiChat(model=openai_model_agent)
+        elif chat_driver == self.CHAT_API_OPENAI_COMPLETION:
+            self.chat_api = OpenAIApiCompletion(model=openai_model_completion)
+        else:
+            self.chat_api = TgwuiApi()
+            
+        # Create the agent
         new_agent = Agent(self.chat_api, agent_definition, self.project, self.user_string, self.bot_string)
         new_agent.sign_on(self.sign_on_template)
 
@@ -141,6 +158,5 @@ if __name__ == '__main__':
     Main entry point for the application.
     """
 
-    chat_api = TgwuiApi()
     configuration = ConfigManager()
-    agent_swarm = AgentSwarm(chat_api, configuration)
+    agent_swarm = AgentSwarm(configuration)
