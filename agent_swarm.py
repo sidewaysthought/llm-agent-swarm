@@ -91,7 +91,7 @@ class AgentSwarm():
             while not self.message_queue.empty():
                 message = self.message_queue.get()
                 recipient_name = message['to']
-                self.display_message(message)
+                #self.display_message(message)
                 if recipient_name in self.agents:
                     self.agents[recipient_name].receive(message)
 

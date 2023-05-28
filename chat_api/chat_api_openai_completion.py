@@ -46,7 +46,7 @@ class OpenAIApiCompletion(ChatApi):
         openai.api_key = self.api_key
 
 
-    def send(self, message:str = '', max_tokens:int = 200, temp:float= 0.5, model:str = 'gpt-3.5-turbo') -> str:
+    def send(self, message:list, max_tokens:int = 200, temp:float= 0.5, model:str = 'gpt-3.5-turbo') -> str:
         """
         Send a chat message to the OpenAI API and return the response.
         

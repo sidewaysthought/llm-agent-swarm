@@ -1,4 +1,6 @@
 import datetime
+import json
+import re
 from memory_manager.memory_manager import MemoryManager
 
 class Agent:
@@ -14,6 +16,8 @@ class Agent:
             user_string (str, optional): The user string. Defaults to ''.
             bot_string (str, optional): The bot string. Defaults to ''.
         """
+
+        super().__init__()
         
         # Agent Foundation
         self.profile = agent_profile
@@ -26,6 +30,7 @@ class Agent:
             "to": None,
             "message": None
         }
+        self.SYSTEM_USER = 'System'
 
         # Set-up the template tokens
         self.replacement_strings = {
@@ -43,6 +48,7 @@ class Agent:
         self.memory = MemoryManager(self.session_id + '-' + self.name)
         self.outbound_queue = {}
         self.inbound_queue = {}
+        self.system_prompt = self.RESPONSE_TEMPLATE.copy()
 
 
     def sign_on(self,message_template:str = 'Agent <name> has signed on.'):
@@ -50,26 +56,39 @@ class Agent:
         Signs on to the chat API.
         """
 
-        message = self.fill_in_script(message_template)
-        self.add_to_inbound_queue(message, self.profile['supervisor'])
+        self.system_prompt['message'] = self.fill_in_script(message_template, self.replacement_strings)
+        self.system_prompt['to'] = self.profile['name']
+        self.system_prompt['from'] = self.SYSTEM_USER
+        self.add_to_inbound_queue(self.system_prompt['message'], self.profile['supervisor'])
         
 
-    def send_to_api(self, message) -> str:
+    def send_to_api(self, messages:list) -> str:
         """
         Send a message to the API and add to history
         
         Args:
-            message (str): The message to send.
+            message (list): The conversation to send
             
         Returns:
             str: The response from the API.
         """
+        
+        api_message = None
 
-        reply = self.chat_api.send(message=message)
+        if self.chat_api.message_type == self.chat_api.MESSAGE_TYPE_STRING:
+            api_message = ''
+            for message in messages:
+                api_message += self.fill_in_script(self.chat_api.message_template, message) + '\n\n'
+        elif self.chat_api.message_type == self.chat_api.MESSAGE_TYPE_LIST:
+            api_message = []
+            for message in messages:
+                api_message.append(self.fill_in_script(self.chat_api.message_template, message))
+
+        reply = self.chat_api.send(message=api_message)
         return reply
+    
 
-
-    def fill_in_script(self, script) -> str:
+    def fill_in_script(self, script, replacement_tokens:dict) -> str:
         """
         Fills in the template tokens in the script and return the completed script.
 
@@ -80,8 +99,8 @@ class Agent:
             str: The filled in script.
         """
 
-        for token in self.replacement_strings:
-            script = script.replace(f'<{token}>', self.replacement_strings[token])
+        for token in replacement_tokens:
+            script = script.replace(f'<{token}>', replacement_tokens[token])
 
         return script
     
@@ -177,11 +196,11 @@ class Agent:
         Interpret the message queue and add responses to the outbound queue.
         """
 
-        ogm = ''
+        ogm = []
         for from_name in self.inbound_queue:
-            ogm += f'Conversation with {from_name}:\n\n'
+            ogm.append(self.system_prompt)
             for message in self.inbound_queue[from_name]:
-                ogm += message["message"] + '\n'
+                ogm.append(message)
                 self.remember(message)
             self.inbound_queue[from_name] = []
             reply = self.send_to_api(ogm)

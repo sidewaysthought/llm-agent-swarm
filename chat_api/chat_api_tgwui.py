@@ -9,19 +9,24 @@ class TgwuiApi(ChatApi):
         super().__init__(host, port)
 
         # Constants
-        self._ENDPOINT = '/api/v1/generate'
+        self.ENDPOINT = '/api/v1/generate'
+
+        # Variables
+        self.message_type = self.MESSAGE_TYPE_STRING
+        self.message_template = '<from>: <message>'
 
 
-    def send(self, message:str = '', max_tokens:int = 200, timeout:int = 120, temp:float= 0.5) -> str:
+    def send(self, message:str, max_tokens:int = 200, timeout:int = 120, temp:float= 0.5) -> str:
 
         response = ''
 
-        uri = f'{self.host}:{self.port}{self._ENDPOINT}'
+        uri = f'{self.host}:{self.port}{self.ENDPOINT}'
 
         post = {
             'prompt': message,
             'temperature': float(temp)
         }
+        print(json.dumps(post, indent=4))
         reply = requests.post(uri, json=post, timeout=timeout)
 
         if reply.status_code == 200:
