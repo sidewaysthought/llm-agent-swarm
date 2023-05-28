@@ -40,7 +40,7 @@ class Agent:
 
         # Attributes
         self.name = self.profile['name']
-        self.memory = MemoryManager(self.name, self.session_id)
+        self.memory = MemoryManager(self.session_id + '-' + self.name)
         self.outbound_queue = {}
         self.inbound_queue = {}
 

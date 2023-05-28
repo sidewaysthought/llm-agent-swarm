@@ -3,13 +3,13 @@ from rdflib import Graph, URIRef, Literal, Namespace
 
 class MemoryManager:
 
-    def __init__(self, agent_name:str = '', session_id:str = ''):
+    def __init__(self, sys_namespace:str):
         
         # I'm using two database styles because I'm greedy and want the best of both worlds where graph can
         # be used for triples and rapid subject searches, and the vector database can be used for detailed
         # semantic searches that the graph database can't do.
         self.graph = Graph()
-        self.namespace = Namespace(session_id + '-' + agent_name)
+        self.namespace = Namespace(sys_namespace)
 
 
     def remember(self, message_obj:dict = {}):
@@ -75,7 +75,7 @@ class MemoryManager:
 
         if len(memories_to_remove) > 0:
             data_removed = True
-            
+
         for memory_uri in memories_to_remove:
             self.graph.remove((memory_uri, None, None))
             self.graph.remove((None, None, memory_uri))
