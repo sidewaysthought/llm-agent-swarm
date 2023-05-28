@@ -1,3 +1,6 @@
+import datetime
+from memory_manager.memory_manager import MemoryManager
+
 class Agent:
 
     def __init__(self, chat_api, agent_profile, project:str = '', user_string:str = '', bot_string:str = ''):
@@ -15,6 +18,7 @@ class Agent:
         # Agent Foundation
         self.profile = agent_profile
         self.chat_api = chat_api
+        self.memory = MemoryManager()
 
         # Constants
         self.RESPONSE_TEMPLATE = {
@@ -135,6 +139,7 @@ class Agent:
                 ogm['message'] = message['message']
                 ogm['to'] = to_name
                 ogm['from'] = self.profile['name']
+                self.memory.remember(ogm) # type: ignore
                 response.append(ogm)
             self.outbound_queue[to_name] = []
 
@@ -152,6 +157,24 @@ class Agent:
         self.add_to_inbound_queue(message['message'], message['from'])
 
 
+    def remember(self, message_obj:dict = {}):
+        """
+        Remember a message.
+
+        Args:
+            message_obj (dict): The message object.
+        """
+
+        new_memory = ''
+
+        date_time = datetime.datetime.utcnow().isoformat()
+        handle = message_obj['from'] + ' to ' + message_obj['to'] + ': '
+        message = message_obj['message']
+        new_memory = date_time + ' | ' + handle + message
+
+        self.memory.remember(new_memory)
+
+
     def interpret(self):
         """
         Interpret the message queue and add responses to the outbound queue.
@@ -162,6 +185,7 @@ class Agent:
             ogm += f'Conversation with {from_name}:\n\n'
             for message in self.inbound_queue[from_name]:
                 ogm += message["message"] + '\n'
+                self.remember(message)
             self.inbound_queue[from_name] = []
             reply = self.send_to_api(ogm)
             self.add_to_outbound_queue(reply, from_name)
