@@ -4,7 +4,7 @@ from .chat_api import ChatApi
 
 class TgwuiApi(ChatApi):
 
-    def __init__(self, host:str = 'http://127.0.0.1', port:int = 5000):
+    def __init__(self, host:str = 'http://127.0.0.1', port:int = 5000, user_string:str = '', agent_string:str = ''):
 
         super().__init__(host, port)
 
@@ -26,7 +26,6 @@ class TgwuiApi(ChatApi):
             'prompt': message,
             'temperature': float(temp)
         }
-        print(json.dumps(post, indent=4))
         reply = requests.post(uri, json=post, timeout=timeout)
 
         if reply.status_code == 200:

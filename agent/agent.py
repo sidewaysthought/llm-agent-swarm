@@ -5,7 +5,7 @@ from memory_manager.memory_manager import MemoryManager
 
 class Agent:
 
-    def __init__(self, chat_api, agent_profile, project:str = '', user_string:str = '', bot_string:str = '', session_id:str = ''):
+    def __init__(self, chat_api, agent_profile, project:str = '', session_id:str = ''):
         """
         Constructor for Agent
 
@@ -40,9 +40,7 @@ class Agent:
             'name': self.profile['name'],
             'supervisor': self.profile['supervisor'],
             'role': self.profile['role'],
-            'project': project,
-            'bot_string': bot_string,
-            'user_string': user_string
+            'project': project
         }
 
         # Attributes

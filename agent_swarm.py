@@ -91,7 +91,7 @@ class AgentSwarm():
             while not self.message_queue.empty():
                 message = self.message_queue.get()
                 recipient_name = message['to']
-                #self.display_message(message)
+                self.display_message(message)
                 if recipient_name in self.agents:
                     self.agents[recipient_name].receive(message)
 
@@ -146,11 +146,11 @@ class AgentSwarm():
         elif chat_driver == self.CHAT_API_OPENAI_COMPLETION:
             self.chat_api = OpenAIApiCompletion(model=openai_model_completion)
         else:
-            self.chat_api = TgwuiApi()
+            self.chat_api = TgwuiApi(user_string=self.user_string, agent_string=self.bot_string)
             
         # Create the agent
         new_agent = Agent(chat_api=self.chat_api, agent_profile=agent_definition, project=self.project, 
-                          user_string=self.user_string, bot_string=self.bot_string, session_id=self.session_id)
+                          session_id=self.session_id)
         new_agent.sign_on(self.sign_on_template)
 
         return new_agent

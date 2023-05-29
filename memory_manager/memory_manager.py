@@ -27,13 +27,13 @@ class MemoryManager:
             bool: True if successful, False otherwise.
         """
 
-        if 'message' in message_obj and 'from' in message_obj and 'to' in message_obj and 'timestamp' in message_obj:
-            memory_id = str(uuid.uuid4())
-            memory_uri = URIRef(self.namespace + memory_id)
-            self.graph.add((memory_uri, self.namespace.from_name, Literal(message_obj["from"])))
-            self.graph.add((memory_uri, self.namespace.to_name, Literal(message_obj["to"])))
-            self.graph.add((memory_uri, self.namespace.timestamp, Literal(message_obj["timestamp"])))
-            self.graph.add((memory_uri, self.namespace.message, Literal(message_obj["message"])))
+        #if 'message' in message_obj and 'from' in message_obj and 'to' in message_obj and 'timestamp' in message_obj:
+        memory_id = str(uuid.uuid4())
+        memory_uri = URIRef(self.namespace + memory_id)
+
+        for key in message_obj:
+            predicate = URIRef(str(self.namespace) + key)
+            self.graph.add((memory_uri, predicate, Literal(message_obj[key])))
             self.usage_counter[memory_id] = 0
 
         self.prune()
@@ -52,14 +52,14 @@ class MemoryManager:
 
         results = []
 
-        for memory_uri in self.graph.subjects(predicate=self.namespace.message, object=Literal(search_term)):
+        for memory_uri, predicate, _ in self.graph.triples((None, None, Literal(search_term))):
             memory_id = str(memory_uri).split("/")[-1]
             self.usage_counter[memory_id] += 1
             memory = {}
-            memory["from"] = str(self.graph.value(subject=memory_uri, predicate=self.namespace.from_name))
-            memory["to"] = str(self.graph.value(subject=memory_uri, predicate=self.namespace.to_name))
-            memory["datetime"] = str(self.graph.value(subject=memory_uri, predicate=self.namespace.datetime))
-            memory["message"] = str(self.graph.value(subject=memory_uri, predicate=self.namespace.message))
+            keys = [str(predicate).split("/")[-1] for predicate in self.graph.predicates(subject=memory_uri)]
+            for key in keys:
+                predicate = URIRef(str(self.namespace) + key)
+                memory[key] = str(self.graph.value(subject=memory_uri, predicate=predicate))
             results.append(memory)
 
         self.prune()
