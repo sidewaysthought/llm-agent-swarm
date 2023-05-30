@@ -139,12 +139,12 @@ class AgentSwarm():
 
         # Deal with Chat API
         chat_driver = self.configuration.get_property('chat_api')
-        openai_model_agent = str(self.configuration.get_property('openai_model_agent'))
+        openai_model_agent = str(self.configuration.get_property('openai_model_chat'))
         openai_model_completion = str(self.configuration.get_property('openai_model_completion'))
         if chat_driver == self.CHAT_API_OPENAI_CHAT:
-            self.chat_api = OpenAIApiChat(model=openai_model_agent)
+            self.chat_api = OpenAIApiChat(model_string=openai_model_agent)
         elif chat_driver == self.CHAT_API_OPENAI_COMPLETION:
-            self.chat_api = OpenAIApiCompletion(model=openai_model_completion)
+            self.chat_api = OpenAIApiCompletion(model_string=openai_model_completion)
         else:
             self.chat_api = TgwuiApi(user_string=self.user_string, agent_string=self.bot_string)
             

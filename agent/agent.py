@@ -1,6 +1,7 @@
 import datetime
 import json
 import re
+from colorama import Fore, Back, Style
 from memory_manager.memory_manager import MemoryManager
 
 class Agent:
@@ -201,6 +202,7 @@ class Agent:
 
         ogm = []
         for from_name in self.inbound_queue:
+            print(f'...Interpreting {Fore.GREEN}{from_name}{Fore.RESET}\'s conversation...')
             ogm.append(self.system_prompt)
             for message in self.inbound_queue[from_name]:
                 ogm.append(message)

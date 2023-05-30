@@ -7,7 +7,7 @@ from .chat_api import ChatApi
 
 class OpenAIApiCompletion(ChatApi):
 
-    def __init__(self, host:str = 'https://api.openai.com', port:int = 80, model='text-ada-001'):
+    def __init__(self, host:str = 'https://api.openai.com', port:int = 80, model_string='text-ada-001'):
 
         super().__init__(host, port)
 
@@ -41,7 +41,7 @@ class OpenAIApiCompletion(ChatApi):
         ]
 
         # Run-time variables
-        self.model = model
+        self.model = model_string
 
         # Set the API key from the environment variable
         self.api_key = os.environ.get('OPENAI_API_KEY', '')

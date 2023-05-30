@@ -7,7 +7,7 @@ from .chat_api import ChatApi
 
 class OpenAIApiChat(ChatApi):
 
-    def __init__(self, host:str = 'https://api.openai.com', port:int = 80, model:str = 'gpt-3.5-turbo'):
+    def __init__(self, host:str = 'https://api.openai.com', port:int = 80, model_string:str = 'gpt-3.5-turbo'):
 
         super().__init__(host, port)
 
@@ -25,10 +25,10 @@ class OpenAIApiChat(ChatApi):
         ]
 
         # Run-time variables
+        self.model = model_string
 
         # Set the API key from the environment variable
         self.api_key = os.environ.get('OPENAI_API_KEY', '')
-        self.model = model
         openai.api_key = self.api_key
 
 
