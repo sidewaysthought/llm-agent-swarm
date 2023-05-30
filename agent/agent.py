@@ -58,7 +58,7 @@ class Agent:
         Signs on to the chat API.
         """
 
-        self.system_prompt['message'] = self.fill_in_script(message_template, self.replacement_strings)
+        self.system_prompt['message'] = self.fill_in_template(message_template, self.replacement_strings)
         self.system_prompt['to'] = self.profile['name']
         self.system_prompt['from'] = self.SYSTEM_USER
         self.system_prompt['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
@@ -80,8 +80,34 @@ class Agent:
         
         api_message = None
 
+        context_size = self.chat_api.get_context_size()
+        tokens_used = 0
         for message in messages:
-            templated_message = self.fill_in_script(self.chat_api.message_template, message)
+            tokens_used += message['tokens']
+
+        # If more tokens are being used than available, summarize
+        if tokens_used > (context_size - (context_size * 0.05)):
+            all_messages = []
+            all_messages.append(messages[0])
+            middle_msg = {}
+            middle_token_count = 0
+            if len(messages) > 3:
+                # Keep the first, the last two, and summarize everything in the middle
+                for middle_msg in messages[1:-2]:
+                    middle_token_count = middle_msg['tokens']
+                middle_msg = self.summarize(messages[1:-2], middle_token_count)
+            else:
+                # Keep the first and last, summarize everything in the middle
+                for middle_msg in messages[1:-1]:
+                    middle_token_count = middle_msg['tokens']
+                middle_msg = self.summarize(messages[1:-1], middle_token_count)
+            all_messages.append(middle_msg)
+            all_messages.append(messages[-2:])
+            messages = all_messages
+
+        # Template all messages and send end-to-end
+        for message in messages:
+            templated_message = self.fill_in_template(self.chat_api.message_template, message)
             if self.chat_api.message_type == self.chat_api.MESSAGE_TYPE_STRING:
                 api_message = templated_message + '\n\n'
             elif self.chat_api.message_type == self.chat_api.MESSAGE_TYPE_LIST:
@@ -93,7 +119,30 @@ class Agent:
         return reply
     
 
-    def fill_in_script(self, script, replacement_tokens:dict) -> str:
+    def summarize(self, messages:list, token_length:int) -> str:
+        """
+        Use an API call to summarize a list of messages.
+        
+        Args:
+            messages (list): The messages to summarize.
+        
+        Returns:
+            str: The summarized messages.
+        """
+
+        reply = ''
+
+        api_message = 'Please summarize the following message. No need to be polite.\n\n'
+
+        for message in messages:
+            api_message += message['message'] + '\n\n'
+
+        reply = self.chat_api.send(message=api_message)
+
+        return reply
+    
+
+    def fill_in_template(self, script, replacement_tokens:dict) -> str:
         """
         Fills in the template tokens in the script and return the completed script.
 
@@ -104,8 +153,9 @@ class Agent:
             str: The filled in script.
         """
 
-        for token in replacement_tokens:
-            script = script.replace(f'<{token}>', replacement_tokens[token])
+        for symbol in replacement_tokens:
+            new_value = str(replacement_tokens[symbol])
+            script = script.replace(f'<{symbol}>', new_value)
 
         return script
     
