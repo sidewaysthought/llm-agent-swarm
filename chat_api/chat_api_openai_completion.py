@@ -3,6 +3,7 @@ import os
 import openai
 import requests
 import tiktoken
+import time
 from .chat_api import ChatApi
 
 class OpenAIApiCompletion(ChatApi):
@@ -39,6 +40,7 @@ class OpenAIApiCompletion(ChatApi):
                 'context': 2049
             }
         ]
+        self.RETRIES = 5
 
         # Run-time variables
         self.model = model_string
@@ -65,11 +67,21 @@ class OpenAIApiCompletion(ChatApi):
 
         response = ''
 
-        reply = openai.Completion.create(
-            engine=self.model,
-            prompt=message,
-            max_tokens=max_tokens
-        )
+        incomplete = True
+        retries = 0
+        while incomplete:
+            try:
+                reply = openai.Completion.create(
+                    engine=self.model,
+                    prompt=message,
+                    max_tokens=max_tokens
+                )
+                incomplete = False
+            except:
+                time.sleep(3)
+                retries += 1
+                if retries > self.RETRIES:
+                    raise Exception('OpenAI API call failed after {} retries.'.format(self.RETRIES))
 
         # Save the first text response to reply
         try:

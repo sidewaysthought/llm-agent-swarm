@@ -3,6 +3,7 @@ import os
 import openai
 import requests
 import tiktoken
+import time
 from .chat_api import ChatApi
 
 class OpenAIApiChat(ChatApi):
@@ -27,6 +28,7 @@ class OpenAIApiChat(ChatApi):
             "role": "user",
             "content": ''
         }
+        self.RETRIES = 5
 
         # Run-time variables
         self.model = model_string
@@ -57,7 +59,7 @@ class OpenAIApiChat(ChatApi):
         messages = [
             {
                 "role": "system",
-                "content": "As an AI, you're collaborating with other AIs on a project. Information about your purpose, and an active conversation follow."
+                "content": "You are an AI assistant in a swarm of other agents. This conversation is a log of your interactions with another agent."
             }
         ]
 
@@ -66,12 +68,22 @@ class OpenAIApiChat(ChatApi):
             new_msg['content'] = msg
             messages.append(new_msg)
 
-        reply = openai.ChatCompletion.create(
-            model=self.model,
-            messages=messages,
-            timeout=int(timeout),
-            temperature=float(temp)
-        )
+        incomplete = True
+        retries = 0
+        while incomplete:
+            try:
+                reply = openai.ChatCompletion.create(
+                    model=self.model,
+                    messages=messages,
+                    timeout=int(timeout),
+                    temperature=float(temp)
+                )
+                incomplete = False
+            except:
+                time.sleep(3)
+                retries += 1
+                if retries > self.RETRIES:
+                    raise Exception('OpenAI API call failed after {} retries.'.format(self.RETRIES))
 
         # Save the first text response to reply
         try:
