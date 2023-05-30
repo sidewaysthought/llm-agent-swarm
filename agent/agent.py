@@ -77,14 +77,14 @@ class Agent:
         
         api_message = None
 
-        if self.chat_api.message_type == self.chat_api.MESSAGE_TYPE_STRING:
-            api_message = ''
-            for message in messages:
-                api_message += self.fill_in_script(self.chat_api.message_template, message) + '\n\n'
-        elif self.chat_api.message_type == self.chat_api.MESSAGE_TYPE_LIST:
-            api_message = []
-            for message in messages:
-                api_message.append(self.fill_in_script(self.chat_api.message_template, message))
+        for message in messages:
+            templated_message = self.fill_in_script(self.chat_api.message_template, message)
+            if self.chat_api.message_type == self.chat_api.MESSAGE_TYPE_STRING:
+                api_message = templated_message + '\n\n'
+            elif self.chat_api.message_type == self.chat_api.MESSAGE_TYPE_LIST:
+                api_message = []
+                for message in messages:
+                    api_message.append(templated_message)
 
         reply = self.chat_api.send(message=api_message)
         return reply
