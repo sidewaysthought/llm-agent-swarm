@@ -9,7 +9,8 @@ class TgwuiApi(ChatApi):
         super().__init__(host, port)
 
         # Constants
-        self.ENDPOINT = '/api/v1/generate'
+        self.ENDPOINT_GENERATE = '/api/v1/generate'
+        self.ENDPOINT_TOKENCOUNT = '/api/v1/token-count'
 
         # Variables
         self.message_type = self.MESSAGE_TYPE_STRING
@@ -20,7 +21,7 @@ class TgwuiApi(ChatApi):
 
         response = ''
 
-        uri = f'{self.host}:{self.port}{self.ENDPOINT}'
+        uri = f'{self.host}:{self.port}{self.ENDPOINT_GENERATE}'
 
         post = {
             'prompt': message,
@@ -33,3 +34,35 @@ class TgwuiApi(ChatApi):
             response = api_response['results'][0]['text']
 
         return response
+    
+
+    def get_context_size(self) -> int:
+        """
+        Returns the context size of the LLM.
+        """
+
+        return 2048
+
+
+    def get_message_size(self, message:str = '', timeout:int = 120) -> int:
+        """
+        Returns the tokens taken by the message.
+        """
+
+        result = 0
+
+        uri = f'{self.host}:{self.port}{self.ENDPOINT_TOKENCOUNT}'
+
+        post = {
+            'prompt': message
+        }
+        reply = requests.post(uri, json=post, timeout=timeout)
+
+        if reply.status_code == 200:
+            api_response = reply.json()
+            try:
+                result = api_response['results'][0]['tokens']
+            except:
+                pass
+
+        return result

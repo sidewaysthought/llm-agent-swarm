@@ -20,3 +20,19 @@ class ChatApi:
     def send(self, message:str|list|dict, max_tokens:int = 200, timeout:int = 120) -> str:
 
         return ''
+    
+
+    def get_context_size(self) -> int:
+        """
+        Returns the context size of the LLM.
+        """
+
+        return 0
+
+
+    def get_message_size(self, message:str = '') -> int:
+        """
+        Returns the tokens taken by the message.
+        """
+
+        return 0

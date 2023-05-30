@@ -2,6 +2,7 @@ import json
 import os
 import openai
 import requests
+import tiktoken
 from .chat_api import ChatApi
 
 class OpenAIApiChat(ChatApi):
@@ -73,3 +74,32 @@ class OpenAIApiChat(ChatApi):
 
         
         return response
+    
+
+    def get_context_size(self) -> int:
+        """
+        Returns the context size of the LLM.
+
+        Returns:
+            int: The context size of the LLM.
+        """
+
+        for model in self.MODELS:
+            if model['name'] == self.model:
+                return model['context']
+        
+        return -1
+
+
+    def get_message_size(self, message:str = '', timeout:int = 120) -> int:
+        """
+        Returns the tokens taken by the message.
+        """
+
+        result = 0
+
+        encoder = tiktoken.encoding_for_model(self.model)
+        msg_as_tokens = encoder.encode(message)
+        result = len(msg_as_tokens)
+
+        return result
