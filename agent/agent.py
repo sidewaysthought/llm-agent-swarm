@@ -31,6 +31,7 @@ class Agent:
             "to": None,
             "message": None,
             'timestamp': None,
+            'tokens': 0
         }
         self.SYSTEM_USER = 'System'
         self.TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -61,6 +62,8 @@ class Agent:
         self.system_prompt['to'] = self.profile['name']
         self.system_prompt['from'] = self.SYSTEM_USER
         self.system_prompt['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
+        self.system_prompt['tokens'] = self.chat_api.get_message_size(self.system_prompt['message'])
+
         self.add_to_inbound_queue(self.system_prompt['message'], self.profile['supervisor'])
         
 
@@ -141,6 +144,7 @@ class Agent:
         new_message['from'] = from_name
         new_message['to'] = self.profile['name']
         new_message['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
+        new_message['tokens'] = self.chat_api.get_message_size(message)
 
         if from_name not in self.inbound_queue:
             self.inbound_queue[from_name] = []
