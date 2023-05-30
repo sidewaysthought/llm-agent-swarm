@@ -23,16 +23,22 @@ class OpenAIApiChat(ChatApi):
                 'context': 4096
             }
         ]
+        self.API_MSG = {
+            "role": "user",
+            "content": ''
+        }
 
         # Run-time variables
         self.model = model_string
+        self.message_type = self.MESSAGE_TYPE_LIST
+        self.message_template = '<from>: <message>'
 
         # Set the API key from the environment variable
         self.api_key = os.environ.get('OPENAI_API_KEY', '')
         openai.api_key = self.api_key
 
 
-    def send(self, message:str = '', max_tokens:int = 200, timeout:int = 120, temp:float= 0.5) -> str:
+    def send(self, message:list = [], max_tokens:int = 200, timeout:int = 120, temp:float= 0.5) -> str:
         """
         Send a chat message to the OpenAI API and return the response.
         
@@ -51,13 +57,16 @@ class OpenAIApiChat(ChatApi):
         messages = [
             {
                 "role": "system",
-                "content": "As an AI, you're collaborating with other AIs on a project, using the following information about your creation and your ongoing dialog with another agent."
-            },
-            {
-                "role": "user",
-                "content": f'"{message}"'
+                "content": "As an AI, you're collaborating with other AIs on a project. Information about your purpose, and an active conversation follow."
             }
         ]
+
+        for msg in message:
+            new_msg = self.API_MSG.copy()
+            new_msg['content'] = msg
+            messages.append(new_msg)
+
+        print(json.dumps(messages, indent=4))
 
         reply = openai.ChatCompletion.create(
             model=self.model,

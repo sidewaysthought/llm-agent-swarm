@@ -42,13 +42,15 @@ class OpenAIApiCompletion(ChatApi):
 
         # Run-time variables
         self.model = model_string
+        self.message_type = self.MESSAGE_TYPE_STRING
+        self.message_template = '<from>: <message>\n\n'
 
         # Set the API key from the environment variable
         self.api_key = os.environ.get('OPENAI_API_KEY', '')
         openai.api_key = self.api_key
 
 
-    def send(self, message:list, max_tokens:int = 200, temp:float= 0.5, model:str = 'gpt-3.5-turbo') -> str:
+    def send(self, message:str, max_tokens:int = 200, temp:float= 0.5) -> str:
         """
         Send a chat message to the OpenAI API and return the response.
         
@@ -63,11 +65,10 @@ class OpenAIApiCompletion(ChatApi):
 
         response = ''
 
-        reply = openai.ChatCompletion.create(
-            model=model,
+        reply = openai.Completion.create(
+            engine=self.model,
             prompt=message,
-            max_tokens=max_tokens,
-            temperature=temp
+            max_tokens=max_tokens
         )
 
         # Save the first text response to reply
