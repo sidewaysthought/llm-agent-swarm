@@ -234,6 +234,9 @@ class Agent:
             message (str): The message to receive.
         """
 
+        to_remember = message.copy()
+        del to_remember['tokens']
+        self.remember(to_remember)
         self.add_to_inbound_queue(message['message'], message['from'])
 
 
@@ -246,6 +249,7 @@ class Agent:
         """
 
         new_memory = message_obj.copy()
+        del new_memory['tokens']
         self.memory.remember(new_memory)
 
 
@@ -260,7 +264,6 @@ class Agent:
             ogm.append(self.system_prompt)
             for message in self.inbound_queue[from_name]:
                 ogm.append(message)
-                self.remember(message)
             self.inbound_queue[from_name] = []
             reply = self.send_to_api(ogm)
             self.add_to_outbound_queue(reply, from_name)
