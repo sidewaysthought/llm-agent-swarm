@@ -66,8 +66,6 @@ class OpenAIApiChat(ChatApi):
             new_msg['content'] = msg
             messages.append(new_msg)
 
-        print(json.dumps(messages, indent=4))
-
         reply = openai.ChatCompletion.create(
             model=self.model,
             messages=messages,
