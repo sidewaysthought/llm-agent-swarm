@@ -4,7 +4,7 @@ import openai
 import requests
 import tiktoken
 import time
-from .chat_api import ChatApi
+from .main import ChatApi
 
 class OpenAIApiChat(ChatApi):
 

@@ -3,11 +3,11 @@ import threading
 import queue
 import secrets
 import string
-from agent.agent import Agent
-from chat_api.chat_api_tgwui import TgwuiApi
-from chat_api.chat_api_openai_completion import OpenAIApiCompletion
-from chat_api.chat_api_openai_chat import OpenAIApiChat
-from config_manager.config_manager import ConfigManager
+from agent.main import Agent
+from chat_api.tgwui import TgwuiApi
+from chat_api.openai_completion import OpenAIApiCompletion
+from chat_api.openai_chat import OpenAIApiChat
+from config_manager.main import ConfigManager
 from colorama import Fore, Back, Style
 from dotenv import load_dotenv
 

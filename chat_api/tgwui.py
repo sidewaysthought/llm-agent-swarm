@@ -1,6 +1,6 @@
 import json
 import requests
-from .chat_api import ChatApi
+from .main import ChatApi
 
 class TgwuiApi(ChatApi):
 
