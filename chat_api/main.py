@@ -19,8 +19,6 @@ class ChatApi:
 
     def send(self, message:str|list|dict, max_tokens:int = 200, timeout:int = 120, temp=0.01) -> str:
 
-        print(json.dumps(message, indent=4, sort_keys=True))
-
         return ''
     
 
