@@ -19,6 +19,8 @@ class TgwuiApi(ChatApi):
 
     def send(self, message:str, max_tokens:int = 200, timeout:int = 120, temp:float= 0.5) -> str:
 
+        super().send(message, max_tokens, timeout)
+
         response = ''
 
         uri = f'{self.host}:{self.port}{self.ENDPOINT_GENERATE}'

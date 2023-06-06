@@ -28,6 +28,7 @@ class OpenAIApiChat(ChatApi):
             "role": "user",
             "content": ''
         }
+        self.END_STATEMENT = 'Please respond. Thank you.'
         self.RETRIES = 5
 
         # Run-time variables
@@ -54,19 +55,24 @@ class OpenAIApiChat(ChatApi):
             str: The response from the API.
         """
 
+        super().send(message, max_tokens, timeout, temp)
+        
         response = ''
+        api_package = []
 
-        messages = [
-            {
-                "role": "system",
-                "content": "You are an AI assistant in a swarm of other agents. This conversation is a log of your interactions with another agent."
-            }
-        ]
+        system_msg = self.API_MSG.copy()
+        system_msg['role'] = 'system'
+        system_msg['content'] = message[0]['message']
+        api_package.append(system_msg)
 
-        for msg in message:
+        for msg in message[1:]:
             new_msg = self.API_MSG.copy()
             new_msg['content'] = msg
-            messages.append(new_msg)
+            api_package.append(new_msg)
+        
+        end_message = self.API_MSG.copy()
+        end_message['content'] = self.END_STATEMENT
+        api_package.append(end_message)
 
         incomplete = True
         retries = 0
@@ -74,7 +80,7 @@ class OpenAIApiChat(ChatApi):
             try:
                 reply = openai.ChatCompletion.create(
                     model=self.model,
-                    messages=messages,
+                    messages=api_package,
                     timeout=int(timeout),
                     temperature=float(temp)
                 )

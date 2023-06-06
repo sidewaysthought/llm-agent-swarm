@@ -65,6 +65,8 @@ class OpenAIApiCompletion(ChatApi):
             str: The response from the API.
         """
 
+        super().send(message, max_tokens, temp)
+
         response = ''
 
         incomplete = True

@@ -1,6 +1,7 @@
 import datetime
 import json
 import re
+import time
 from colorama import Fore, Back, Style
 from memory_manager.memory_manager import MemoryManager
 
@@ -35,6 +36,7 @@ class Agent:
         }
         self.SYSTEM_USER = 'System'
         self.TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+        self.SUMMARY_PROMPT = 'Please summarize the below text.\n\n'
 
         # Set-up the template tokens
         self.replacement_strings = {
@@ -64,7 +66,7 @@ class Agent:
         self.system_prompt['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
         self.system_prompt['tokens'] = self.chat_api.get_message_size(self.system_prompt['message'])
 
-        self.add_to_inbound_queue(self.system_prompt['message'], self.profile['supervisor'])
+        self.inbound_queue[self.SYSTEM_USER] = [self.system_prompt]
         
 
     def send_to_api(self, messages:list) -> str:
@@ -78,52 +80,56 @@ class Agent:
             str: The response from the API.
         """
         
+        reply = ''
         api_message = None
-
-        # Get the last two messages and pull memories that might matter  
-        if len(messages) > 1:
-            memory_message = self.recall(messages[-2:])
-        else:
-            memory_message = self.recall(messages)
-        messages.insert(1, memory_message)
-
-        # Calculate tokens for message handling
         context_size = self.chat_api.get_context_size()
-        tokens_used = 0
-        for message in messages:
-            tokens_used += message['tokens']
 
-        # If more tokens are being used than available, summarize
-        if tokens_used > (context_size - (context_size * 0.05)):
-            all_messages = []
-            all_messages.append(messages[0])
-            middle_msg = {}
-            middle_token_count = 0
-            if len(messages) > 3:
-                # Keep the first, the last two, and summarize everything in the middle
-                for middle_msg in messages[1:-2]:
-                    middle_token_count = middle_msg['tokens']
-                middle_msg = self.summarize(messages[1:-2], middle_token_count)
+        # If the messages list is not empty...
+        if messages:
+            
+            # Get the token length of the first message only
+            token_length = messages[0]['tokens']
+            if token_length > context_size:
+                raise Exception('Starting prompt is too long to send to API.')
+            
+            # Get memories based on the last two messages
+            if len(messages) > 2:
+                # Recall based on the last two messages
+                memories = self.memory.recall(messages[-2:])
+            elif len(messages) > 1:
+                # Recall based on the last message
+                memories = self.memory.recall(messages[-1:])
             else:
-                # Keep the first and last, summarize everything in the middle
-                for middle_msg in messages[1:-1]:
-                    middle_token_count = middle_msg['tokens']
-                middle_msg = self.summarize(messages[1:-1], middle_token_count)
-            all_messages.append(middle_msg)
-            all_messages.append(messages[-2:])
-            messages = all_messages
+                memories = []
 
-        # Template all messages and send end-to-end
-        for message in messages:
-            templated_message = self.fill_in_template(self.chat_api.message_template, message)
-            if self.chat_api.message_type == self.chat_api.MESSAGE_TYPE_STRING:
-                api_message = templated_message + '\n\n'
-            elif self.chat_api.message_type == self.chat_api.MESSAGE_TYPE_LIST:
-                api_message = []
-                for message in messages:
-                    api_message.append(templated_message)
+            # Insert the memories just after the first message
+            messages = messages[:1] + memories + messages[1:]
+            
+            # Get the token length of all remaining messages
+            if len(messages) > 1:
+                for message in messages[1:]:
+                    token_length += message['tokens']
+            else:
+                token_length = 0
+            
+            # If the token length is greater than the context size, summarize
+            if token_length > context_size:
+                if len(messages) > 2:
+                    # Get token length of first and last, subtract from context size
+                    middle_token_length = self.chat_api.get_context_size() - (messages[0]['tokens'] + messages[-1]['tokens'])
+                    api_message = [messages[0]] + self.summarize(messages[1:-2], middle_token_length) + messages[-1:]
+                elif len(messages) > 1:
+                    # Get the length of the first and last two messages, subtract from context size
+                    middle_token_length = self.chat_api.get_context_size() - (messages[0]['tokens'] + messages[-2]['tokens'] + messages[-1]['tokens'])
+                    api_message = [messages[0]] + self.summarize(messages[1:-1], middle_token_length) + messages[-2:]
+                else:
+                    raise Exception('Starting prompt plus last message is too long to send to API.')
+            else:
+                api_message = messages
+                
+            # Send the messages to the API
+            reply = self.chat_api.send(message=api_message)
 
-        reply = self.chat_api.send(message=api_message)
         return reply
     
 
@@ -139,13 +145,28 @@ class Agent:
         """
 
         reply = ''
+        api_message = None
 
-        api_message = 'Please summarize the following message. No need to be polite.\n\n'
+        if messages:
 
-        for message in messages:
-            api_message += message['message'] + '\n\n'
+            # IF the model expects a string, concatenate the messages
+            if self.chat_api.message_type == self.chat_api.MESSAGE_TYPE_STRING:
+                api_message = self.SUMMARY_PROMPT
+                for message in messages:
+                    api_message += message['message'] + '\n\n'
 
-        reply = self.chat_api.send(message=api_message)
+            # If the model expects a list, create a list of messages
+            elif self.chat_api.message_type == self.chat_api.MESSAGE_TYPE_LIST:
+                api_message = []
+                summary_prompt = self.RESPONSE_TEMPLATE.copy()
+                summary_prompt['message'] = self.SUMMARY_PROMPT
+                summary_prompt['to'] = self.profile['name']
+                summary_prompt['from'] = self.SYSTEM_USER
+                api_message.append(summary_prompt)
+                for message in messages:
+                    api_message.append(message)
+
+            reply = self.chat_api.send(message=api_message, max_tokens=token_length)
 
         return reply
     
@@ -188,7 +209,7 @@ class Agent:
         self.outbound_queue[to].append(new_message)
 
 
-    def add_to_inbound_queue(self, message:str, from_name:str):
+    def add_to_inbound_queue(self, message:dict, from_name:str, token_length:int):
         """
         Adds a message to the message queue.
         
@@ -197,17 +218,16 @@ class Agent:
             from_name (str): The name of the sender.
         """
 
-        new_message = self.RESPONSE_TEMPLATE.copy()
-        new_message['message'] = message
-        new_message['from'] = from_name
-        new_message['to'] = self.profile['name']
-        new_message['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
-        new_message['tokens'] = self.chat_api.get_message_size(message)
-
         if from_name not in self.inbound_queue:
             self.inbound_queue[from_name] = []
 
-        self.inbound_queue[from_name].append(new_message)
+        message['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
+        if token_length:
+            message['tokens'] = token_length
+        else:
+            message['tokens'] = self.chat_api.get_message_size(message)
+
+        self.inbound_queue[from_name].append(message)
 
     
     def deliver(self) -> list:
@@ -242,8 +262,10 @@ class Agent:
             message (str): The message to receive.
         """
 
+        if not self.inbound_queue[message['from']]:
+            self.inbound_queue[message['from']] = [self.SYSTEM_USER]
         self.remember(message)
-        self.add_to_inbound_queue(message['message'], message['from'])
+        self.add_to_inbound_queue(message)
 
 
     def remember(self, message_obj:dict = {}):
@@ -304,13 +326,16 @@ class Agent:
         """
 
         ogm = []
-        for from_name in self.inbound_queue:
-            print(f'...Interpreting {Fore.GREEN}{from_name}{Fore.RESET}\'s conversation...')
-            ogm.append(self.system_prompt)
-            for message in self.inbound_queue[from_name]:
-                ogm.append(message)
-            self.inbound_queue[from_name] = []
+        if self.inbound_queue:
+            for from_name in self.inbound_queue:
+                print(f'...Interpreting {Fore.GREEN}{from_name}{Fore.RESET}\'s conversation...')
+                for message in self.inbound_queue[from_name]:
+                    ogm.append(message)
+            del self.inbound_queue[from_name]
             reply = self.send_to_api(ogm)
             self.add_to_outbound_queue(reply, from_name)
+
+        # Wait for 5 seconds
+        time.sleep(5)
         
         

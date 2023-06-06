@@ -16,7 +16,7 @@ class MemoryManager:
         self.usage_counter = {}
 
 
-    def remember(self, message_obj:dict = {}):
+    def remember(self, new_memory:dict = {}):
         """
         Remember a message.
 
@@ -31,9 +31,9 @@ class MemoryManager:
         memory_id = str(uuid.uuid4())
         memory_uri = URIRef(self.namespace + memory_id)
 
-        for key in message_obj:
+        for key in new_memory:
             predicate = URIRef(str(self.namespace) + key)
-            self.graph.add((memory_uri, predicate, Literal(message_obj[key])))
+            self.graph.add((memory_uri, predicate, Literal(new_memory[key])))
             self.usage_counter[memory_id] = 0
 
         self.prune()
