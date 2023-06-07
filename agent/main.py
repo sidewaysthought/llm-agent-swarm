@@ -1,6 +1,4 @@
 import datetime
-import json
-import re
 import time
 from colorama import Fore, Back, Style
 from memory_manager.memory_manager import MemoryManager

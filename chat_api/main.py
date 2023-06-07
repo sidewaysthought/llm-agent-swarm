@@ -1,5 +1,3 @@
-import json
-
 class ChatApi:
 
     def __init__(self, host:str, port:int, user_string:str = '', agent_string:str = ''):

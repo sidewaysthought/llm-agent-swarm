@@ -1,7 +1,5 @@
-import json
 import os
 import openai
-import requests
 import tiktoken
 import time
 from .main import ChatApi
