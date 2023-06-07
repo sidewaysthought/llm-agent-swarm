@@ -1,0 +1,82 @@
+# App configuration
+pause_on_loop: true
+
+# Project configuration
+project:
+  name: Short Title
+  description: Write a few sentences describing the project you would like the swarm to complete
+
+# Agent System Prompt -- Opening prompt which defines the behavior
+#
+# <name> - The name of the agent
+# <project> - The name of the project
+# <role> - The role of the agent
+# <supervisor> - The name of the agent's supervisor
+# <guidance> - The guidance for the agent
+#
+sign_on_template: "Hello <name>. You are a software AI agent that is part of a swarm of other agents 
+  created to complete a project.
+  
+  The project: <project>
+  Your role in the swarm: <role>
+  Your supervisor: <supervisor>
+
+  <guidance>
+
+  Complete the work yourself, or delegate tasks to another agent. Ask SystemAgent to create a new agent 
+  you supervise. To collaborate with another agent, speak naturally and address the desired agent by name."
+
+# Guidance for specific agents
+#
+# It is suggested to have at least two agents: ChiefExecAgent and SystemAgent.
+# 
+# Each agent will be created with the sign_on_template above, with the <variable> values substituted
+# with information here.
+agents:
+
+  # ChiefExecAgent can sometimes complete the work on their own, but out of the box, it comes with one
+  # subordinate agent, SystemAgent, which can be used to issue commands, and create new agents if needed.
+  - name: ChiefExecAgent
+    supervisor: System
+    role: Lead the swarm of agents to complete the project.
+    guidance: "Develop a strategy to complete the project and work with any agents you feel necessary
+      to complete the project.
+
+      Your support agents are:
+      <agents:subordinate>"
+
+  # SystemAgent is a support agent that can be used to issue commands to other agents, and create new agents.
+  # It reports to ChiefExecAgent.   
+  - name: SystemAgent
+    supervisor: ChiefExecAgent
+    role: Interact with the system the swarm is on, interact with the internet, and manage agents.
+    guidance: "You are responsible for accepting requests to execute commands by any agent. You can also
+      create, delete, and modify agents.
+      
+      Your commands:
+      <commands:system>"
+
+# LLM Configuration
+#
+# Several LLMs are supported via chat drivers. Additional sections are provided for specific LLMs
+#
+# tgwui - Use the Text Generation WebUI API as an interface to many LLMs.
+# openai_chat - Use the OpenAI chat API to chat with an LLM. GPT-4 and GPT-3.5 are supported.
+# openai_completion - Use the OpenAI completions API to generate text. GPT-3 completion models are supported.
+#
+chat_api: openai_chat
+
+# Local LLM Configuration
+#
+# These variables are used to help steer local LLMs to generate sensical output without RPing the project
+# to completion. These are currently used for the tgwui chat driver, but may be redundant depending on the
+# TGWUI configuration. Refer to the TGWUI source code and documentation to determine if you need this.
+#
+user_string: "USER:"
+bot_string: "ASSISTANT:"
+
+# OpenAI Configuration
+#
+# When using the openai drivers, these model strings control the default models to use for each driver.
+openai_model_chat: 'gpt-3.5-turbo'            # Used for chat driver
+openai_model_completion: 'text-curie-001'     # Used for completions driver
