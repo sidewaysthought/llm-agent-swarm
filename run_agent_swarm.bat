@@ -18,4 +18,4 @@ REM Install dependencies
 python -m pip install -r requirements.txt
 
 REM Run Python Script
-python agent_swarm.py
+python -m agent_swarm
