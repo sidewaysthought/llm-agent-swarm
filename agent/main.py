@@ -2,10 +2,11 @@ import datetime
 import time
 from colorama import Fore, Back, Style
 from memory_manager.main import MemoryManager
+from chat_api.main import ChatApi
 
 class Agent:
 
-    def __init__(self, chat_api, agent_profile, project:str = '', session_id:str = ''):
+    def __init__(self, chat_api:ChatApi, agent_profile:dict, project:str, session_id:str):
         """
         Constructor for Agent
 
@@ -21,8 +22,21 @@ class Agent:
         
         # Agent Foundation
         self.profile = agent_profile
-        self.chat_api = chat_api
         self.session_id = session_id
+
+        if isinstance(chat_api, ChatApi):
+            self.chat_api = chat_api
+        else:
+            raise Exception('chat_api must be of type ChatApi')
+        
+        if not isinstance(agent_profile, dict):
+            raise Exception('agent_profile must be of type dict')
+        
+        if not isinstance(project, str):
+            raise Exception('project must be of type str')
+        
+        if not isinstance(session_id, str):
+            raise Exception('session_id must be of type str')
 
         # Constants
         self.RESPONSE_TEMPLATE = {
@@ -58,13 +72,16 @@ class Agent:
         Signs on to the chat API.
         """
 
-        self.system_prompt['message'] = self.fill_in_template(message_template, self.replacement_strings)
-        self.system_prompt['to'] = self.profile['name']
-        self.system_prompt['from'] = self.SYSTEM_USER
-        self.system_prompt['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
-        self.system_prompt['tokens'] = self.chat_api.get_message_size(self.system_prompt['message'])
-
-        self.inbound_queue[self.SYSTEM_USER] = [self.system_prompt]
+        # If message_template is not empty...
+        if message_template:
+            self.system_prompt['message'] = self.fill_in_template(message_template, self.replacement_strings)
+            self.system_prompt['to'] = self.profile['name']
+            self.system_prompt['from'] = self.SYSTEM_USER
+            self.system_prompt['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
+            self.system_prompt['tokens'] = self.chat_api.get_message_size(self.system_prompt['message'])
+            self.inbound_queue[self.SYSTEM_USER] = [self.system_prompt]
+        else:
+            raise Exception('message_template cannot be empty.')
         
 
     def send_to_api(self, messages:list) -> str:
@@ -84,6 +101,28 @@ class Agent:
 
         # If the messages list is not empty...
         if messages:
+
+            # Check for bad things
+            for message in messages:
+                if not isinstance(message, dict):
+                    raise Exception('messages must be a list of dicts.')
+                
+                # Loop through the dictionary keys
+                for key in message.keys():
+
+                    # Skip tokens, and check values are strings and not empty strings
+                    if key != 'tokens':
+                        if not isinstance(message[key], str):
+                            raise Exception('messages must be a list of dicts with string values.')
+                        elif not message[key]:
+                            raise Exception('messages must be a list of dicts with non-empty string values.')
+                        
+                    # If the key is tokens, check to ensure if it is an int and not negative
+                    else:
+                        if not isinstance(message[key], int):
+                            raise Exception('messages must be a list of dicts with int token values.')
+                        elif message[key] < 0:
+                            raise Exception('messages must be a list of dicts with non-negative token values.')
             
             # Get the token length of the first message only
             token_length = messages[0]['tokens']
@@ -128,7 +167,10 @@ class Agent:
             # Send the messages to the API
             reply = self.chat_api.send(message=api_message)
 
-        return reply
+            return reply
+        
+        else:
+            raise Exception('messages cannot be an empty list.')
     
 
     def summarize(self, messages:list, token_length:int) -> str:
@@ -144,6 +186,17 @@ class Agent:
 
         reply = ''
         api_message = None
+
+        if not isinstance(token_length, int):
+            raise Exception('token_length must be an int.')
+        
+        if token_length < 0:
+            raise Exception('token_length cannot be negative.')
+        
+        for message in messages:
+            # If message['message'] is not a string, raise an exception
+            if not isinstance(message['message'], str):
+                raise Exception('message must be a string.')
 
         if messages:
 
@@ -166,7 +219,10 @@ class Agent:
 
             reply = self.chat_api.send(message=api_message, max_tokens=token_length)
 
-        return reply
+            return reply
+        
+        else:
+            raise Exception('messages cannot be an empty list.')
     
 
     def fill_in_template(self, script, replacement_tokens:dict) -> str:
