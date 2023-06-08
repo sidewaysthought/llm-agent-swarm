@@ -1,7 +1,7 @@
 import datetime
 import time
 from colorama import Fore, Back, Style
-from memory_manager.memory_manager import MemoryManager
+from memory_manager.main import MemoryManager
 
 class Agent:
 
