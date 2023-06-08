@@ -2,7 +2,7 @@ import os
 import openai
 import tiktoken
 import time
-from .main import ChatApi
+from chat_api.main import ChatApi
 
 class OpenAIApiCompletion(ChatApi):
 
