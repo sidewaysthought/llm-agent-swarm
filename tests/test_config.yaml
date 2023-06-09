@@ -1,0 +1,40 @@
+pause_on_loop: true
+project:
+  name: Short Title
+  description: Write a few sentences describing the project you would like the swarm to complete
+  
+sign_on_template: "Hello <name>. You are a software AI agent that is part of a swarm of other agents 
+  created to complete a project.
+  
+  The project: <project>
+  Your role in the swarm: <role>
+  Your supervisor: <supervisor>
+
+  <guidance>
+
+  Complete the work yourself, or delegate tasks to another agent. Ask SystemAgent to create a new agent 
+  you supervise. To collaborate with another agent, speak naturally and address the desired agent by name."
+
+agents:
+  - name: ChiefExecAgent
+    supervisor: System
+    role: Lead the swarm of agents to complete the project.
+    guidance: "Develop a strategy to complete the project and work with any agents you feel necessary
+      to complete the project.
+
+      Your support agents are:
+      <agents:subordinate>"
+  - name: SystemAgent
+    supervisor: ChiefExecAgent
+    role: Interact with the system the swarm is on, interact with the internet, and manage agents.
+    guidance: "You are responsible for accepting requests to execute commands by any agent. You can also
+      create, delete, and modify agents.
+      
+      Your commands:
+      <commands:system>"
+
+chat_api: tgwui
+user_string: "USER:"
+bot_string: "ASSISTANT:"
+openai_model_chat: 'gpt-3.5-turbo'            # Used for chat driver
+openai_model_completion: 'text-curie-001'     # Used for completions driver

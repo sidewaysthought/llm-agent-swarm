@@ -7,4 +7,4 @@ command -v pip >/dev/null 2>&1 || { echo >&2 "pip is required but it's not insta
 pip install -r requirements.txt
 
 # Run python script
-python -m agent_swarm
+python -m main

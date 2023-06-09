@@ -7,6 +7,7 @@ class ChatApi:
         self.MESSAGE_TYPE_LIST = 'list'
         self.USER_STRING = user_string
         self.AGENT_STRING = agent_string
+        self.DEFAULT_CONTEXT_SIZE = 2048
 
         # Variables
         self.host = host
@@ -25,7 +26,7 @@ class ChatApi:
         Returns the context size of the LLM.
         """
 
-        return 0
+        return self.DEFAULT_CONTEXT_SIZE
 
 
     def get_message_size(self, message:str = '') -> int:

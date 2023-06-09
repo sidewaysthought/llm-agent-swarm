@@ -1,5 +1,5 @@
 import requests
-from .main import ChatApi
+from chat_api.main import ChatApi
 
 class TgwuiApi(ChatApi):
 
