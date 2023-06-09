@@ -3,9 +3,9 @@ import queue
 import secrets
 import string
 from agent.main import Agent
-from chat_api.tgwui import TgwuiApi
-from chat_api.openai_completion import OpenAIApiCompletion
-from chat_api.openai_chat import OpenAIApiChat
+from chat_api.tgwui.main import TgwuiApi
+from chat_api.openai_completion.main import OpenAIApiCompletion
+from chat_api.openai_chat.main import OpenAIApiChat
 from config_manager.main import ConfigManager
 from colorama import Fore, Back, Style
 from dotenv import load_dotenv
