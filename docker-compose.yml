@@ -1,0 +1,9 @@
+# ...guys. you don't need a version: anymore. It's been deprecated. https://nickjanetakis.com/blog/docker-tip-51-which-docker-compose-api-version-should-you-use
+services:
+  llm-agent-swarm:
+    hostname: llm-agent-swarm
+    container_name: llm-agent-swarm
+    user: 1000:1000
+    build:
+      context: ./
+    env_file: .env
