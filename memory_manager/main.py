@@ -37,6 +37,8 @@ class MemoryManager:
             self.usage_counter[memory_id] = 0
 
         self.prune()
+
+        return memory_uri
     
 
     def recall(self, search_term:str = '') -> list:

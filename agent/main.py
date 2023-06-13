@@ -345,7 +345,7 @@ class Agent:
         self.add_to_inbound_queue(message, message['from'], message['tokens'])
 
 
-    def remember(self, message_obj:dict = {}):
+    def remember(self, message_obj:dict = {}) -> str:
         """
         Remember a message.
 
@@ -353,9 +353,25 @@ class Agent:
             message_obj (dict): The message object.
         """
 
+        if not isinstance(message_obj, dict):
+            raise Exception('message_obj must be a dict.')
+        
+        keys = ['message', 'from', 'to', 'timestamp', 'tokens']
+        for key in keys:
+            if not message_obj[key] or message_obj[key] in ['', None, 0, False]:
+                raise Exception('message_obj must have a message field.')
+            if key not in message_obj:
+                raise Exception('message_obj must have a message field.')
+
+        try:
+            del new_memory['tokens']
+        except:
+            pass
+
         new_memory = message_obj.copy()
-        del new_memory['tokens']
-        self.memory.remember(new_memory)
+        memory_uri = self.memory.remember(new_memory)
+
+        return memory_uri
 
 
     def recall(self, messages:list) -> dict:
