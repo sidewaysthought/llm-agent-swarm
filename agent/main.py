@@ -423,17 +423,15 @@ class Agent:
         Interpret the message queue and add responses to the outbound queue.
         """
 
-        ogm = []
         if self.inbound_queue:
             for from_name in self.inbound_queue:
                 print(f'...Interpreting {Fore.GREEN}{from_name}{Fore.RESET}\'s conversation...')
+                ogm = []
                 for message in self.inbound_queue[from_name]:
                     ogm.append(message)
+                reply = self.send_to_api(ogm)
+                self.add_to_outbound_queue(reply, from_name)
             del self.inbound_queue[from_name]
-            reply = self.send_to_api(ogm)
-            self.add_to_outbound_queue(reply, from_name)
 
-        # Wait for 5 seconds
-        time.sleep(5)
         
         

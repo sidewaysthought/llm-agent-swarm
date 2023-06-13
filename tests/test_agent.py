@@ -494,3 +494,11 @@ class TestAgent(unittest.TestCase):
 
     def test_recall_empty_list(self):
         self.assertEqual(self.agent.recall([]), {})
+
+    # interpret
+
+    def test_interpret(self):
+        self.agent.receive(self.sample_messages[0])
+        self.agent.interpret()
+        self.assertEqual(self.agent.inbound_queue, {})
+        self.assertNotEqual(self.agent.outbound_queue, {})
