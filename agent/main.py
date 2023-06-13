@@ -379,37 +379,42 @@ class Agent:
         Search memory for related messages and return as a string to be sent.
         
         Args:
-            messages (list): The messages to search for.
+            messages (list): The messages to search based on.
             
         Returns:
             str: The response.
         """
 
-        response = self.RESPONSE_TEMPLATE.copy()
-        search_terms = ''
-        recalled_messages = []
-        token_count = 0
-        search_results = []
-        max_tokens = self.chat_api.get_context_size()
+        response = {}
 
-        for message in messages:
-            search_terms += message['message'] + '\n'
-            
-        recalled_messages = self.memory.recall(search_terms)
+        if not isinstance(messages, list):
+            raise Exception('messages must be a list.')
 
-        for message in recalled_messages:
-            message['tokens'] = self.chat_api.get_message_size(message['message'])
-            if token_count + message['tokens'] < max_tokens - (max_tokens * 0.05):
-                token_count += message['tokens']
-                search_results.append(message)
+        if messages:
+            response = self.RESPONSE_TEMPLATE.copy()
+            search_terms = ''
+            recalled_messages = []
+            token_count = 0
+            search_results = []
+            max_tokens = self.chat_api.get_context_size()
+            for message in messages:
+                search_terms += message['message'] + '\n'
+            recalled_messages = self.memory.recall(search_terms)
 
-        response['message'] = self.summarize(search_results, token_count)
-        response['message'] += 'These are messages which might provide important context.\n\n'
-        response['from'] = 'Memory'
-        response['to'] = self.profile['name']
-        response['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
-        response['tokens'] = self.chat_api.get_message_size(response['message'])
-        
+            for message in recalled_messages:
+                message['tokens'] = self.chat_api.get_message_size(message['message'])
+                if token_count + message['tokens'] < max_tokens - (max_tokens * 0.05):
+                    token_count += message['tokens']
+                    search_results.append(message)
+
+            if search_results:
+                response['message'] = self.summarize(search_results, token_count)
+                response['message'] += 'These are messages which might provide important context.\n\n'
+                response['from'] = 'Memory'
+                response['to'] = self.profile['name']
+                response['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
+                response['tokens'] = self.chat_api.get_message_size(response['message'])
+
         return response
 
 

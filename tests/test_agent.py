@@ -473,3 +473,24 @@ class TestAgent(unittest.TestCase):
             self.agent.remember(self.sample_messages[6])
 
     
+    # recall
+    # Note: this only covers sending mesasges in. Test cases for memory are in test_memory.py
+
+    def test_recall_missing_term(self):
+        with self.assertRaises(Exception):
+            self.agent.recall(None)
+
+    def test_recall_empty_term(self):
+        with self.assertRaises(Exception):
+            self.agent.recall('')
+
+    def test_recall_int_term(self):
+        with self.assertRaises(Exception):
+            self.agent.recall(1)
+
+    def test_recall_string_term(self):
+        with self.assertRaises(Exception):
+            self.agent.recall('string')
+
+    def test_recall_empty_list(self):
+        self.assertEqual(self.agent.recall([]), {})
