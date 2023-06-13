@@ -339,3 +339,93 @@ class TestAgent(unittest.TestCase):
         messages = [self.sample_messages[0], self.sample_messages[0]]
         with self.assertRaises(Exception):
             self.agent.summarize(messages, tokens)
+
+    # fill_in_template
+
+    def test_fill_in_template(self):
+        filled_in_template = self.agent.fill_in_template(self.sign_on_template, self.agent.replacement_strings)
+        self.assertEqual(filled_in_template, 'ChiefExecAgent, Test Project - Do a thing., Agent role., System, Guidance.')
+
+    def test_fill_in_template_blank_template(self):
+        filled_in_template = self.agent.fill_in_template('', self.agent.replacement_strings)
+        self.assertEqual(filled_in_template, '')
+
+    def test_fill_in_template_blank_replacement_strings(self):
+        filled_in_template = self.agent.fill_in_template(self.sign_on_template, {})
+        self.assertEqual(filled_in_template, self.sign_on_template)
+
+    def test_fill_in_template_none_template(self):
+        with self.assertRaises(Exception):
+            self.agent.fill_in_template(None, self.agent.replacement_strings)
+
+    def test_fill_in_template_none_replacement_strings(self):
+        with self.assertRaises(Exception):
+            self.agent.fill_in_template(self.sign_on_template, None)
+
+    def test_fill_in_template_dict_template(self):
+        with self.assertRaises(Exception):
+            self.agent.fill_in_template({'key', 'value'}, self.agent.replacement_strings)
+
+    # add_to_inbound_queue
+
+    def test_add_to_inbound_queue(self):
+        new_message = self.sample_messages[0]
+        new_message['timestamp'] = None
+        self.agent.add_to_inbound_queue(self.sample_messages[0], new_message['from'], 1)
+        self.assertEqual(self.agent.inbound_queue, {new_message['from']: [new_message]})
+
+    def test_add_to_inbound_queue_empty_message(self):
+        new_message = {}
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, new_message['from'], 1)
+
+    def test_add_to_inbound_queue_none_message(self):
+        new_message = None
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, new_message['from'], 1)
+
+    def test_add_to_inbound_queue_empty_string_from(self):
+        new_message = self.sample_messages[0]
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, '', 1)
+
+    def test_add_to_inbound_queue_none_from(self):
+        new_message = self.sample_messages[0]
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, None, 1)
+
+    def test_add_to_inbound_queue_empty_string_tokens(self):
+        new_message = self.sample_messages[0]
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, new_message['from'], '')
+
+    def test_add_to_inbound_queue_none_tokens(self):
+        new_message = self.sample_messages[0]
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, new_message['from'], None)
+
+    def test_add_to_inbound_queue_negative_tokens(self):
+        new_message = self.sample_messages[0]
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, new_message['from'], -1)
+
+    # receive
+
+    def test_receive(self):
+        self.agent.receive(self.sample_messages[0])
+        sample_reply = {
+            self.sample_messages[0]['from']: [
+                self.sample_messages[0]
+            ]
+        }
+        self.assertEqual(sample_reply, self.agent.inbound_queue)
+
+    def test_receive_empty_message(self):
+        with self.assertRaises(Exception):
+            self.agent.receive({})
+
+    def test_receive_none_message(self):
+        with self.assertRaises(Exception):
+            self.agent.receive(None)
+
+    

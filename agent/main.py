@@ -1,4 +1,5 @@
 import datetime
+import json
 import time
 from colorama import Fore, Back, Style
 from memory_manager.main import MemoryManager
@@ -272,7 +273,16 @@ class Agent:
             from_name (str): The name of the sender.
         """
 
-        if from_name not in self.inbound_queue:
+        if not isinstance(from_name, str) or not from_name:
+            raise Exception('from_name cannot be None.')
+        
+        if not isinstance(message, dict):
+            raise Exception('message must be a dict.')
+        
+        if not isinstance(token_length, int) or token_length < 0:
+            raise Exception('token_length must be a positive int.')
+        
+        if from_name not in self.inbound_queue.keys():
             self.inbound_queue[from_name] = []
 
         message['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
@@ -316,10 +326,23 @@ class Agent:
             message (str): The message to receive.
         """
 
-        if not self.inbound_queue[message['from']]:
-            self.inbound_queue[message['from']] = [self.SYSTEM_USER]
+        from_name = self.SYSTEM_USER
+
+        if not isinstance(message, dict):
+            raise Exception('message must be a dict.')
+        
+        if 'from' not in message:
+            raise Exception('message must have a from field.')
+        
+        if not message['from'] or message['from'] in ['', None, 0, False]:
+            raise Exception('message must have a from field.')
+
+        if not message['from'] or message['from'] in ['', None, 0, False]:
+            message['from'] = self.SYSTEM_USER
+            
         self.remember(message)
-        self.add_to_inbound_queue(message)
+
+        self.add_to_inbound_queue(message, message['from'], message['tokens'])
 
 
     def remember(self, message_obj:dict = {}):

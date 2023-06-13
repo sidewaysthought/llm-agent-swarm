@@ -1,29 +1,14 @@
 pause_on_loop: true
 project:
-  name: Short Title
-  description: Write a few sentences describing the project you would like the swarm to complete
+  name: Test Project
+  description: Do a thing.
   
-sign_on_template: "Hello <name>. You are a software AI agent that is part of a swarm of other agents 
-  created to complete a project.
-  
-  The project: <project>
-  Your role in the swarm: <role>
-  Your supervisor: <supervisor>
-
-  <guidance>
-
-  Complete the work yourself, or delegate tasks to another agent. Ask SystemAgent to create a new agent 
-  you supervise. To collaborate with another agent, speak naturally and address the desired agent by name."
-
+sign_on_template: "<name>, <project>, <role>, <supervisor>, <guidance>."
 agents:
   - name: ChiefExecAgent
     supervisor: System
-    role: Lead the swarm of agents to complete the project.
-    guidance: "Develop a strategy to complete the project and work with any agents you feel necessary
-      to complete the project.
-
-      Your support agents are:
-      <agents:subordinate>"
+    role: Agent role.
+    guidance: "Guidance"
   - name: SystemAgent
     supervisor: ChiefExecAgent
     role: Interact with the system the swarm is on, interact with the internet, and manage agents.
