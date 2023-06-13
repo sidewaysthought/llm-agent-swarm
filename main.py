@@ -1,3 +1,4 @@
+import os
 import threading
 import queue
 import secrets
@@ -177,5 +178,8 @@ if __name__ == '__main__':
     Main entry point for the application.
     """
 
-    configuration = ConfigManager()
+    # Get the full path of config.yaml, in the same directory as this Python script
+    config_file = os.path.join(os.path.dirname(__file__), 'config.yaml')
+
+    configuration = ConfigManager(config_file)
     agent_swarm = AgentSwarm(configuration)
