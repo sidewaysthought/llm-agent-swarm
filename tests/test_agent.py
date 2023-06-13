@@ -428,4 +428,48 @@ class TestAgent(unittest.TestCase):
         with self.assertRaises(Exception):
             self.agent.receive(None)
 
+
+    # remember
+    # Note: this only covers sending mesasges in. Test cases for memory are in test_memory.py
+
+    def test_remember(self):
+        memory_id = self.agent.remember(self.sample_messages[0])
+        self.assertIsInstance(memory_id, str)
+
+    def test_remember_empty_message(self):
+        with self.assertRaises(Exception):
+            self.agent.remember({})
+
+    def test_remember_none_message(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(None)
+
+    def test_remember_int_message(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(1)
+
+    def test_remember_string_message(self):
+        with self.assertRaises(Exception):
+            self.agent.remember('string')
+
+    def test_remember_missing_message_key(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(self.sample_messages[2])
+
+    def test_remember_missing_from_key(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(self.sample_messages[3])
+
+    def test_remember_missing_to_key(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(self.sample_messages[4])
+
+    def test_remember_missing_timestamp_key(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(self.sample_messages[5])
+
+    def test_remember_missing_token_key(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(self.sample_messages[6])
+
     
