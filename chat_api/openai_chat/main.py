@@ -1,3 +1,4 @@
+import json
 import os
 import openai
 import tiktoken
@@ -26,7 +27,7 @@ class OpenAIApiChat(ChatApi):
             "role": "user",
             "content": ''
         }
-        self.END_STATEMENT = 'Please respond. Thank you.'
+        self.END_STATEMENT = 'With the information you have received about the project, please initiate the conversation.'
         self.RETRIES = 5
 
         # Run-time variables

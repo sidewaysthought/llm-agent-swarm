@@ -14,7 +14,6 @@ class ConfigManager:
         self.config_file = config_file
         self.config = self.load_config()
 
-
     def load_config(self) -> dict:
         """
         Loads the configuration file.
