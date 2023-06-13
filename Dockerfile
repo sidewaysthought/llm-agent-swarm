@@ -31,4 +31,4 @@ RUN . /home/appuser/venv/bin/activate && \
 ENTRYPOINT [ "tini", "--" ]
 
 # Run it!
-CMD . /home/appuser/venv/bin/activate && python3 -m main.py
+CMD . /home/appuser/venv/bin/activate && python3 -m main
