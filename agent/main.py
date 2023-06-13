@@ -1,4 +1,5 @@
 import datetime
+import json
 import time
 from colorama import Fore, Back, Style
 from memory_manager.main import MemoryManager
@@ -272,7 +273,16 @@ class Agent:
             from_name (str): The name of the sender.
         """
 
-        if from_name not in self.inbound_queue:
+        if not isinstance(from_name, str) or not from_name:
+            raise Exception('from_name cannot be None.')
+        
+        if not isinstance(message, dict):
+            raise Exception('message must be a dict.')
+        
+        if not isinstance(token_length, int) or token_length < 0:
+            raise Exception('token_length must be a positive int.')
+        
+        if from_name not in self.inbound_queue.keys():
             self.inbound_queue[from_name] = []
 
         message['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
@@ -316,13 +326,26 @@ class Agent:
             message (str): The message to receive.
         """
 
-        if not self.inbound_queue[message['from']]:
-            self.inbound_queue[message['from']] = [self.SYSTEM_USER]
+        from_name = self.SYSTEM_USER
+
+        if not isinstance(message, dict):
+            raise Exception('message must be a dict.')
+        
+        if 'from' not in message:
+            raise Exception('message must have a from field.')
+        
+        if not message['from'] or message['from'] in ['', None, 0, False]:
+            raise Exception('message must have a from field.')
+
+        if not message['from'] or message['from'] in ['', None, 0, False]:
+            message['from'] = self.SYSTEM_USER
+            
         self.remember(message)
-        self.add_to_inbound_queue(message)
+
+        self.add_to_inbound_queue(message, message['from'], message['tokens'])
 
 
-    def remember(self, message_obj:dict = {}):
+    def remember(self, message_obj:dict = {}) -> str:
         """
         Remember a message.
 
@@ -330,9 +353,25 @@ class Agent:
             message_obj (dict): The message object.
         """
 
+        if not isinstance(message_obj, dict):
+            raise Exception('message_obj must be a dict.')
+        
+        keys = ['message', 'from', 'to', 'timestamp', 'tokens']
+        for key in keys:
+            if not message_obj[key] or message_obj[key] in ['', None, 0, False]:
+                raise Exception('message_obj must have a message field.')
+            if key not in message_obj:
+                raise Exception('message_obj must have a message field.')
+
+        try:
+            del new_memory['tokens']
+        except:
+            pass
+
         new_memory = message_obj.copy()
-        del new_memory['tokens']
-        self.memory.remember(new_memory)
+        memory_uri = self.memory.remember(new_memory)
+
+        return memory_uri
 
 
     def recall(self, messages:list) -> dict:
@@ -340,37 +379,42 @@ class Agent:
         Search memory for related messages and return as a string to be sent.
         
         Args:
-            messages (list): The messages to search for.
+            messages (list): The messages to search based on.
             
         Returns:
             str: The response.
         """
 
-        response = self.RESPONSE_TEMPLATE.copy()
-        search_terms = ''
-        recalled_messages = []
-        token_count = 0
-        search_results = []
-        max_tokens = self.chat_api.get_context_size()
+        response = {}
 
-        for message in messages:
-            search_terms += message['message'] + '\n'
-            
-        recalled_messages = self.memory.recall(search_terms)
+        if not isinstance(messages, list):
+            raise Exception('messages must be a list.')
 
-        for message in recalled_messages:
-            message['tokens'] = self.chat_api.get_message_size(message['message'])
-            if token_count + message['tokens'] < max_tokens - (max_tokens * 0.05):
-                token_count += message['tokens']
-                search_results.append(message)
+        if messages:
+            response = self.RESPONSE_TEMPLATE.copy()
+            search_terms = ''
+            recalled_messages = []
+            token_count = 0
+            search_results = []
+            max_tokens = self.chat_api.get_context_size()
+            for message in messages:
+                search_terms += message['message'] + '\n'
+            recalled_messages = self.memory.recall(search_terms)
 
-        response['message'] = self.summarize(search_results, token_count)
-        response['message'] += 'These are messages which might provide important context.\n\n'
-        response['from'] = 'Memory'
-        response['to'] = self.profile['name']
-        response['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
-        response['tokens'] = self.chat_api.get_message_size(response['message'])
-        
+            for message in recalled_messages:
+                message['tokens'] = self.chat_api.get_message_size(message['message'])
+                if token_count + message['tokens'] < max_tokens - (max_tokens * 0.05):
+                    token_count += message['tokens']
+                    search_results.append(message)
+
+            if search_results:
+                response['message'] = self.summarize(search_results, token_count)
+                response['message'] += 'These are messages which might provide important context.\n\n'
+                response['from'] = 'Memory'
+                response['to'] = self.profile['name']
+                response['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
+                response['tokens'] = self.chat_api.get_message_size(response['message'])
+
         return response
 
 
@@ -379,17 +423,15 @@ class Agent:
         Interpret the message queue and add responses to the outbound queue.
         """
 
-        ogm = []
         if self.inbound_queue:
             for from_name in self.inbound_queue:
                 print(f'...Interpreting {Fore.GREEN}{from_name}{Fore.RESET}\'s conversation...')
+                ogm = []
                 for message in self.inbound_queue[from_name]:
                     ogm.append(message)
+                reply = self.send_to_api(ogm)
+                self.add_to_outbound_queue(reply, from_name)
             del self.inbound_queue[from_name]
-            reply = self.send_to_api(ogm)
-            self.add_to_outbound_queue(reply, from_name)
 
-        # Wait for 5 seconds
-        time.sleep(5)
         
         

@@ -339,3 +339,166 @@ class TestAgent(unittest.TestCase):
         messages = [self.sample_messages[0], self.sample_messages[0]]
         with self.assertRaises(Exception):
             self.agent.summarize(messages, tokens)
+
+    # fill_in_template
+
+    def test_fill_in_template(self):
+        filled_in_template = self.agent.fill_in_template(self.sign_on_template, self.agent.replacement_strings)
+        self.assertEqual(filled_in_template, 'ChiefExecAgent, Test Project - Do a thing., Agent role., System, Guidance.')
+
+    def test_fill_in_template_blank_template(self):
+        filled_in_template = self.agent.fill_in_template('', self.agent.replacement_strings)
+        self.assertEqual(filled_in_template, '')
+
+    def test_fill_in_template_blank_replacement_strings(self):
+        filled_in_template = self.agent.fill_in_template(self.sign_on_template, {})
+        self.assertEqual(filled_in_template, self.sign_on_template)
+
+    def test_fill_in_template_none_template(self):
+        with self.assertRaises(Exception):
+            self.agent.fill_in_template(None, self.agent.replacement_strings)
+
+    def test_fill_in_template_none_replacement_strings(self):
+        with self.assertRaises(Exception):
+            self.agent.fill_in_template(self.sign_on_template, None)
+
+    def test_fill_in_template_dict_template(self):
+        with self.assertRaises(Exception):
+            self.agent.fill_in_template({'key', 'value'}, self.agent.replacement_strings)
+
+    # add_to_inbound_queue
+
+    def test_add_to_inbound_queue(self):
+        new_message = self.sample_messages[0]
+        new_message['timestamp'] = None
+        self.agent.add_to_inbound_queue(self.sample_messages[0], new_message['from'], 1)
+        self.assertEqual(self.agent.inbound_queue, {new_message['from']: [new_message]})
+
+    def test_add_to_inbound_queue_empty_message(self):
+        new_message = {}
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, new_message['from'], 1)
+
+    def test_add_to_inbound_queue_none_message(self):
+        new_message = None
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, new_message['from'], 1)
+
+    def test_add_to_inbound_queue_empty_string_from(self):
+        new_message = self.sample_messages[0]
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, '', 1)
+
+    def test_add_to_inbound_queue_none_from(self):
+        new_message = self.sample_messages[0]
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, None, 1)
+
+    def test_add_to_inbound_queue_empty_string_tokens(self):
+        new_message = self.sample_messages[0]
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, new_message['from'], '')
+
+    def test_add_to_inbound_queue_none_tokens(self):
+        new_message = self.sample_messages[0]
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, new_message['from'], None)
+
+    def test_add_to_inbound_queue_negative_tokens(self):
+        new_message = self.sample_messages[0]
+        with self.assertRaises(Exception):
+            self.agent.add_to_inbound_queue(new_message, new_message['from'], -1)
+
+    # receive
+
+    def test_receive(self):
+        self.agent.receive(self.sample_messages[0])
+        sample_reply = {
+            self.sample_messages[0]['from']: [
+                self.sample_messages[0]
+            ]
+        }
+        self.assertEqual(sample_reply, self.agent.inbound_queue)
+
+    def test_receive_empty_message(self):
+        with self.assertRaises(Exception):
+            self.agent.receive({})
+
+    def test_receive_none_message(self):
+        with self.assertRaises(Exception):
+            self.agent.receive(None)
+
+
+    # remember
+    # Note: this only covers sending mesasges in. Test cases for memory are in test_memory.py
+
+    def test_remember(self):
+        memory_id = self.agent.remember(self.sample_messages[0])
+        self.assertIsInstance(memory_id, str)
+
+    def test_remember_empty_message(self):
+        with self.assertRaises(Exception):
+            self.agent.remember({})
+
+    def test_remember_none_message(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(None)
+
+    def test_remember_int_message(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(1)
+
+    def test_remember_string_message(self):
+        with self.assertRaises(Exception):
+            self.agent.remember('string')
+
+    def test_remember_missing_message_key(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(self.sample_messages[2])
+
+    def test_remember_missing_from_key(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(self.sample_messages[3])
+
+    def test_remember_missing_to_key(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(self.sample_messages[4])
+
+    def test_remember_missing_timestamp_key(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(self.sample_messages[5])
+
+    def test_remember_missing_token_key(self):
+        with self.assertRaises(Exception):
+            self.agent.remember(self.sample_messages[6])
+
+    
+    # recall
+    # Note: this only covers sending mesasges in. Test cases for memory are in test_memory.py
+
+    def test_recall_missing_term(self):
+        with self.assertRaises(Exception):
+            self.agent.recall(None)
+
+    def test_recall_empty_term(self):
+        with self.assertRaises(Exception):
+            self.agent.recall('')
+
+    def test_recall_int_term(self):
+        with self.assertRaises(Exception):
+            self.agent.recall(1)
+
+    def test_recall_string_term(self):
+        with self.assertRaises(Exception):
+            self.agent.recall('string')
+
+    def test_recall_empty_list(self):
+        self.assertEqual(self.agent.recall([]), {})
+
+    # interpret
+
+    def test_interpret(self):
+        self.agent.receive(self.sample_messages[0])
+        self.agent.interpret()
+        self.assertEqual(self.agent.inbound_queue, {})
+        self.assertNotEqual(self.agent.outbound_queue, {})
