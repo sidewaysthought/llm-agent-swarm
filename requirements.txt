@@ -2,5 +2,7 @@ colorama>=0.4.4
 openai
 python-dotenv>=0.19.1
 rdflib
+spacy>=3.0.0
+en_core_web_sm>=3.0.0
 tiktoken
 pyyaml
