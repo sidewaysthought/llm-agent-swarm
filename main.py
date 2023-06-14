@@ -226,6 +226,7 @@ class AgentSwarm():
                 response.append(ogm)
         # Bounce the message back to the agent to direct it at another agent
         else:
+            ogm = message_to_review.copy()
             ogm['to'] = message_to_review['from']
             ogm['from'] = self.SYSTEM_NAME
             ogm['message'] = self.msg_no_agent_named + message_to_review['message']
