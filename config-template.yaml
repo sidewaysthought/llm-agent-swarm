@@ -1,5 +1,6 @@
 # App configuration
 pause_on_loop: true
+redirect_failure_string: "Your message could not be delivered because no agent is named. Please re-state with an agent in-mind and try again.\n\n"
 
 # Project configuration
 project:

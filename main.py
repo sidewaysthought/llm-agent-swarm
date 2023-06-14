@@ -35,11 +35,12 @@ class AgentSwarm():
         self.CHAT_API_OPENAI_COMPLETION = 'openai_completion'
         self.CHAT_API_OPENAI_CHAT = 'openai_chat'
         self.SYSTEM_NAME = 'System'
-        self.MSG_NO_TARGET = 'Your message could not be delivered because no agent is named. Please try again.\n\n'
+        
 
         # Utilities and data
         load_dotenv()
         self.configuration = configuration
+        self.msg_no_agent_named = str(self.configuration.get_property('redirect_failure_string'))
         self.user_string = str(self.configuration.get_property('user_string'))
         self.bot_string = str(self.configuration.get_property('bot_string'))
         self.sign_on_template = str(self.configuration.get_property('sign_on_template'))
@@ -227,7 +228,7 @@ class AgentSwarm():
         else:
             ogm['to'] = message_to_review['from']
             ogm['from'] = self.SYSTEM_NAME
-            ogm['message'] = self.MSG_NO_TARGET + message_to_review['message']
+            ogm['message'] = self.msg_no_agent_named + message_to_review['message']
             response.append(ogm)
 
         return response
