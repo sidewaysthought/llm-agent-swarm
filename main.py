@@ -1,7 +1,10 @@
+import json
 import os
 import threading
 import queue
 import secrets
+import spacy
+import time
 import string
 from agent.main import Agent
 from chat_api.tgwui.main import TgwuiApi
@@ -31,6 +34,8 @@ class AgentSwarm():
         self.CHAT_API_TGWUI = 'tgwui'
         self.CHAT_API_OPENAI_COMPLETION = 'openai_completion'
         self.CHAT_API_OPENAI_CHAT = 'openai_chat'
+        self.SYSTEM_NAME = 'System'
+        self.MSG_NO_TARGET = 'Your message could not be delivered because no agent is named. Please try again.\n\n'
 
         # Utilities and data
         load_dotenv()
@@ -40,6 +45,7 @@ class AgentSwarm():
         self.sign_on_template = str(self.configuration.get_property('sign_on_template'))
         self.project = str(self.configuration.get_project())
         self.session_id = self.generate_session_id()
+        self.lang_processor = spacy.load("en_core_web_sm")
 
         # Agents
         self.agents = self.create_agents_fron_config()
@@ -85,7 +91,18 @@ class AgentSwarm():
                 messages = agent.deliver()
                 if messages:
                     for message in messages:
-                        self.message_queue.put(message)
+                        # If the message is sent to system, redirect to other agents
+                        if message['to'] == self.SYSTEM_NAME:
+                            redirected_msgs = self.redirect_system_msg(message)
+                            if redirected_msgs:
+                                # Messaages are sent to every named agent.
+                                # TODO: get more granular on who to send messages to
+                                # TODO: handle "everyone" and "anyone" to go to agent subordinates
+                                for msg in redirected_msgs:
+                                    self.message_queue.put(msg)
+                        # The message is going to a named agent
+                        else:
+                            self.message_queue.put(message)
             
             # Deliver messages to the agent
             while not self.message_queue.empty():
@@ -171,6 +188,49 @@ class AgentSwarm():
             new_agents[new_agent.profile['name']] = new_agent
 
         return new_agents
+    
+
+    def redirect_system_msg(self, message_to_review) -> dict:
+        """
+        Redirects system messages to the appropriate agent.
+        
+        Args:
+            message_package (dict): The message package to interpret.
+            
+        Returns:
+            dict: The redirected message package.
+        """
+
+        # Starting stuff
+        response = []
+        named_agents = []
+
+        # Cut the message into language chunks
+        document = self.lang_processor(message_to_review['message'])
+
+        # Find named entities
+        for entity in document.ents:
+            if entity.text in self.agents.keys() and entity.text != message_to_review['from']:
+                named_agents.append(entity.text)
+
+        # Remove duplicates from named_agents
+        named_agents = list(dict.fromkeys(named_agents))
+
+        # Redirect the message based on the named entities.
+        if len(named_agents) > 0:
+            # Send to every named agent in the message
+            for agent in named_agents:
+                ogm = message_to_review.copy()
+                ogm['to'] = agent
+                response.append(ogm)
+        # Bounce the message back to the agent to direct it at another agent
+        else:
+            ogm['to'] = message_to_review['from']
+            ogm['from'] = self.SYSTEM_NAME
+            ogm['message'] = self.MSG_NO_TARGET + message_to_review['message']
+            response.append(ogm)
+
+        return response
 
 
 if __name__ == '__main__':

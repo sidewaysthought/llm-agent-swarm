@@ -289,7 +289,7 @@ class Agent:
         if token_length:
             message['tokens'] = token_length
         else:
-            message['tokens'] = self.chat_api.get_message_size(message)
+            message['tokens'] = self.chat_api.get_message_size(message['message'])
 
         self.inbound_queue[from_name].append(message)
 
@@ -326,8 +326,6 @@ class Agent:
             message (str): The message to receive.
         """
 
-        from_name = self.SYSTEM_USER
-
         if not isinstance(message, dict):
             raise Exception('message must be a dict.')
         
@@ -336,9 +334,6 @@ class Agent:
         
         if not message['from'] or message['from'] in ['', None, 0, False]:
             raise Exception('message must have a from field.')
-
-        if not message['from'] or message['from'] in ['', None, 0, False]:
-            message['from'] = self.SYSTEM_USER
             
         self.remember(message)
 
@@ -358,10 +353,8 @@ class Agent:
         
         keys = ['message', 'from', 'to', 'timestamp', 'tokens']
         for key in keys:
-            if not message_obj[key] or message_obj[key] in ['', None, 0, False]:
-                raise Exception('message_obj must have a message field.')
-            if key not in message_obj:
-                raise Exception('message_obj must have a message field.')
+            if key not in message_obj or message_obj[key] is None:
+                raise Exception('message_obj must have a ' + key + ' field.')
 
         try:
             del new_memory['tokens']
