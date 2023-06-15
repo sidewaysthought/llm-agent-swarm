@@ -10,6 +10,7 @@ from agent.main import Agent
 from chat_api.tgwui.main import TgwuiApi
 from chat_api.openai_completion.main import OpenAIApiCompletion
 from chat_api.openai_chat.main import OpenAIApiChat
+from commands.main import Commands
 from config_manager.main import ConfigManager
 from colorama import Fore, Back, Style
 from dotenv import load_dotenv
@@ -56,6 +57,9 @@ class AgentSwarm():
         self.message_queue = queue.Queue()
         self.should_continue = True
 
+        # Command management
+        self.command_controller = Commands()
+
         self.start_loop()
 
 
@@ -85,6 +89,7 @@ class AgentSwarm():
         ui_thread = threading.Thread(target=self.user_interface)
         ui_thread.start()
 
+        self.should_continue = False
         while self.should_continue:
 
             # Check for messages to deliver

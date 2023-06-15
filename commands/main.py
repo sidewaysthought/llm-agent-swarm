@@ -1,9 +1,8 @@
-import json
 import os
 import importlib
 import inspect
-import pkgutil
 from commands.command import Command
+from pathlib import Path
 
 class Commands:
 
@@ -11,8 +10,9 @@ class Commands:
 
         self.config = config
         self.commands = self.load_commands()
-        print(json.dumps(self.commands, indent=4))
-
+        for command in self.commands:
+            print(command._name)
+        
 
     def load_commands(self) -> list:
         """
@@ -24,15 +24,18 @@ class Commands:
         """
 
         command_list = []
-        directory = os.path.dirname(__file__)
-    
-        # Iterate over each subdirectory in the directory.
-        for _, package_name, _ in pkgutil.iter_modules([directory]):
-            module = importlib.import_module(f"{package_name}.main")
+        directory = Path(__file__).parent
+
+        # Iterate over all Python files in the directory and its subdirectories.
+        for file_path in directory.rglob('*.py'):
+            module_path = file_path.relative_to(directory).with_suffix('')
+            module_name = 'commands.' + '.'.join(module_path.parts)
+            module = importlib.import_module(module_name)
             for _, obj in inspect.getmembers(module):
-                # Check if the object is a class and if it descends from the base class.
-                if inspect.isclass(obj) and issubclass(obj, Command):
-                    command_list.append(obj)
+                if inspect.isclass(obj) and issubclass(obj, Command) and obj is not Command and obj.__module__ == module.__name__:
+                    directory = os.path.dirname(file_path)
+                    config_path = os.path.join(directory, 'config.yaml')
+                    command_list.append(obj(config=config_path))
 
         return command_list
 

@@ -4,6 +4,7 @@ class UserInputCommand(Command):
 
     def __init__(self, config:str = 'config.yaml'):
         super().__init__(config)
+        self.config = self.parse_config(config)
 
     
     def call(self, asking_agent:str, arguments:dict) -> dict:

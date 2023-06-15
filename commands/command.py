@@ -15,7 +15,9 @@ class Command:
         }
         self.STATUS_OK = 'OK'
         self.STATUS_ERROR = 'ERROR'
-        self.config = self.parse_config(config)
+        self.config = None
+        self._name = None
+        self._description = None
 
 
     def parse_config(self, config:str) -> dict:
