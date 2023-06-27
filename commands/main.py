@@ -1,7 +1,6 @@
 import os
 import importlib
 import inspect
-import json
 from commands.command import Command
 from pathlib import Path
 
@@ -12,7 +11,6 @@ class Commands:
         self.config = config
         self.commands = self.load_commands()
         self.command_strings = self.get_command_list()
-        print("command list: ", json.dumps(self.command_strings, indent=4))
         
 
     def load_commands(self) -> list:
