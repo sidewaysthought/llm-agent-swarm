@@ -9,15 +9,22 @@ class Command:
             'from': self.SYSTEM_USER,
             'to': None,
             'timestamp': None,
-            'status': None,
-            'message': None,
-            'data': None
+            'message': {
+                'status': None,
+                'response': None,
+                'data': None
+            }
         }
         self.STATUS_OK = 'OK'
         self.STATUS_ERROR = 'ERROR'
-        self.config = None
-        self._name = None
-        self._description = None
+        self.TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+        self.config = self.parse_config(config)
+        self.name = self.config['name']
+        self.description = self.config['description']
+        self.tags = self.config['command_types']
+        self.arguments = self.config['arguments']
+        self.return_type = self.config['returns']
+        self.command_string = self.build_command_string(self.config)
 
 
     def parse_config(self, config:str) -> dict:
@@ -66,6 +73,36 @@ class Command:
 
         return response
     
+
+    def build_command_string(self, config:dict) -> str:
+        """
+        Create the command string for use by agents.
+        
+        Returns:
+            str: The command string
+        """
+    
+        response = ''
+        documentation = ''
+
+        documentation += f'\n"""\n{config["description"]}\n'
+        response += f'{config["name"]}('
+        arguments = []
+        for argument in config['arguments']:
+            new_argument = ''
+            new_argument += f"{argument['name']}: {argument['type']}"
+            documentation += f"  {argument['name']} - {argument['description']}\n"
+            if not argument['required']:
+                new_argument += f" = {argument['default']}"
+            arguments.append(new_argument)
+        documentation += f"Returns {config['returns']['description']}.\n"
+        documentation += '"""\n'
+        response = documentation + response
+        response += ', '.join(arguments)
+        response += f") -> {config['returns']['type']}"
+    
+        return response
+
 
     def call(self, asking_agent:str, arguments:dict) -> dict:
         return {}

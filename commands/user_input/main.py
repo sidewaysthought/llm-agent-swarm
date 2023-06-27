@@ -3,8 +3,7 @@ from commands.command import Command
 class UserInputCommand(Command):
 
     def __init__(self, config:str = 'config.yaml'):
-        super().__init__(config)
-        self.config = self.parse_config(config)
+        super().__init__(config) 
 
     
     def call(self, asking_agent:str, arguments:dict) -> dict:
@@ -25,7 +24,7 @@ class UserInputCommand(Command):
         if is_valid:
             user_input = input(arguments['message'])
             response['data'] = user_input
-            response['status'] = self.STATUS_SUCCESS
+            response['status'] = self.STATUS_OK
             response['message'] = 'The user has responded with this message.'
         else:
             response['status'] = self.STATUS_ERROR

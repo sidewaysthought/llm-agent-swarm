@@ -1,17 +1,18 @@
 import os
 import importlib
 import inspect
+import json
 from commands.command import Command
 from pathlib import Path
 
 class Commands:
 
-    def __init__(self, config:dict = None):
+    def __init__(self, config:dict = {}):
 
         self.config = config
         self.commands = self.load_commands()
-        for command in self.commands:
-            print(command._name)
+        self.command_strings = self.get_command_list()
+        print("command list: ", json.dumps(self.command_strings, indent=4))
         
 
     def load_commands(self) -> list:
@@ -38,4 +39,25 @@ class Commands:
                     command_list.append(obj(config=config_path))
 
         return command_list
+    
 
+    def get_command_list(self, tag:str = '') -> dict:
+        """
+        Get a list of commands that have been registered. Optionally limit the response by tag
+        
+        Args:
+            tag (str): The tag to limit the response by
+            
+        Return:
+            list: A list of Command objects
+        """
+
+        response = {}
+
+        for command in self.commands:
+            for tag in command.tags:
+                if tag not in response:
+                    response[tag] = []
+                response[tag].append(command.command_string)
+
+        return response
