@@ -10,6 +10,7 @@ from agent.main import Agent
 from chat_api.tgwui.main import TgwuiApi
 from chat_api.openai_completion.main import OpenAIApiCompletion
 from chat_api.openai_chat.main import OpenAIApiChat
+from commands.main import Commands
 from config_manager.main import ConfigManager
 from colorama import Fore, Back, Style
 from dotenv import load_dotenv
@@ -47,6 +48,9 @@ class AgentSwarm():
         self.project = str(self.configuration.get_project())
         self.session_id = self.generate_session_id()
         self.lang_processor = spacy.load("en_core_web_sm")
+
+        # Command management
+        self.command_controller = Commands()
 
         # Agents
         self.agents = self.create_agents_fron_config()
@@ -168,7 +172,7 @@ class AgentSwarm():
             
         # Create the agent
         new_agent = Agent(chat_api=self.chat_api, agent_profile=agent_definition, project=self.project, 
-                          session_id=self.session_id)
+                          session_id=self.session_id, commands=self.command_controller.command_strings)
         new_agent.sign_on(self.sign_on_template)
 
         return new_agent
@@ -191,7 +195,7 @@ class AgentSwarm():
         return new_agents
     
 
-    def redirect_system_msg(self, message_to_review) -> dict:
+    def redirect_system_msg(self, message_to_review) -> list:
         """
         Redirects system messages to the appropriate agent.
         

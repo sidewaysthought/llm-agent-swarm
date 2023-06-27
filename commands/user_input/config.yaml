@@ -1,0 +1,20 @@
+# Command definition
+name: ask_user
+description: Ask the system's user for input
+command_types:
+  - 'user'
+
+# Command syntax
+arguments:
+  - name: msg
+    description: Message to send the user
+    required: true
+    type: str
+  - name: timeout
+    description: Seconds to wait for user input
+    required: false
+    type: int
+    default: 60
+returns: 
+  type: str
+  description: the user response        # Appears as "Returns [description]."
