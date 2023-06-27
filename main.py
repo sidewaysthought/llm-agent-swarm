@@ -196,7 +196,7 @@ class AgentSwarm():
         return new_agents
     
 
-    def redirect_system_msg(self, message_to_review) -> dict:
+    def redirect_system_msg(self, message_to_review) -> list:
         """
         Redirects system messages to the appropriate agent.
         
