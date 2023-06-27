@@ -49,6 +49,9 @@ class AgentSwarm():
         self.session_id = self.generate_session_id()
         self.lang_processor = spacy.load("en_core_web_sm")
 
+        # Command management
+        self.command_controller = Commands()
+
         # Agents
         self.agents = self.create_agents_fron_config()
         self.dialog_queue = []
@@ -56,9 +59,6 @@ class AgentSwarm():
         # Message queue management
         self.message_queue = queue.Queue()
         self.should_continue = True
-
-        # Command management
-        self.command_controller = Commands()
 
         self.start_loop()
 
@@ -173,7 +173,7 @@ class AgentSwarm():
             
         # Create the agent
         new_agent = Agent(chat_api=self.chat_api, agent_profile=agent_definition, project=self.project, 
-                          session_id=self.session_id)
+                          session_id=self.session_id, commands=self.command_controller.command_strings)
         new_agent.sign_on(self.sign_on_template)
 
         return new_agent

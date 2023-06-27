@@ -1,5 +1,6 @@
 import datetime
 import json
+import re
 import time
 from colorama import Fore, Back, Style
 from memory_manager.main import MemoryManager
@@ -7,7 +8,7 @@ from chat_api.main import ChatApi
 
 class Agent:
 
-    def __init__(self, chat_api:ChatApi, agent_profile:dict, project:str, session_id:str):
+    def __init__(self, chat_api:ChatApi, agent_profile:dict, project:str, session_id:str, commands:dict = {}):
         """
         Constructor for Agent
 
@@ -50,6 +51,7 @@ class Agent:
         self.SYSTEM_USER = 'System'
         self.TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
         self.SUMMARY_PROMPT = 'Please summarize the below text.\n\n'
+        self.COMMAND_REGEX = r"<commands(:[\w,]+)?>"
 
         # Set-up the template tokens
         self.replacement_strings = {
@@ -59,6 +61,7 @@ class Agent:
             'role': self.profile['role'],
             'project': project
         }
+        self.command_strings = commands
 
         # Attributes
         self.name = self.profile['name']
@@ -75,7 +78,9 @@ class Agent:
 
         # If message_template is not empty...
         if message_template:
-            self.system_prompt['message'] = self.fill_in_template(message_template, self.replacement_strings)
+            system_message = self.fill_in_template(message_template, self.replacement_strings)
+            system_message = self.insert_commands(system_message, self.command_strings)
+            self.system_prompt['message'] = system_message
             self.system_prompt['to'] = self.profile['name']
             self.system_prompt['from'] = self.SYSTEM_USER
             self.system_prompt['timestamp'] = datetime.datetime.now().strftime(self.TIME_FORMAT)
@@ -83,6 +88,8 @@ class Agent:
             self.inbound_queue[self.SYSTEM_USER] = [self.system_prompt]
         else:
             raise Exception('message_template cannot be empty.')
+        
+        print(self.system_prompt['message'])
         
 
     def send_to_api(self, messages:list) -> str:
@@ -242,6 +249,46 @@ class Agent:
             script = script.replace(f'<{symbol}>', new_value)
 
         return script
+    
+
+    def insert_commands(self, script:str, commands:dict) -> str:
+        """
+        Interprets the command tag in the script, then includes the appropriate command strings
+
+        Args:
+            script (str): The script to insert commands into.
+            commands (dict): The commands to insert.
+
+        Returns:
+            str: The script with the commands inserted.
+        """
+
+        response = script
+        command_string = ''
+        tags = []
+        my_commands = []
+
+        matches = re.findall(self.COMMAND_REGEX, script)
+
+        if matches and matches[0]:
+            tag_string = matches[0][1:]
+            tags = tag_string.split(',')
+        else:
+            tags = commands.keys()
+
+        for tag in tags:
+            if tag in commands:
+                for command in commands[tag]:
+                    if command not in my_commands:
+                        my_commands.append(command)
+
+        # Join my_commands into a string
+        command_string = '\n\n'.join(my_commands)
+
+        # Replace the command tag with the command string using self.COMMAND_REGEX
+        response = re.sub(self.COMMAND_REGEX, command_string, response)
+
+        return response
     
 
     def add_to_outbound_queue(self, message:str, to:str|None = None):
