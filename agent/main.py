@@ -89,8 +89,6 @@ class Agent:
         else:
             raise Exception('message_template cannot be empty.')
         
-        print(self.system_prompt['message'])
-        
 
     def send_to_api(self, messages:list) -> str:
         """

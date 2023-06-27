@@ -89,7 +89,6 @@ class AgentSwarm():
         ui_thread = threading.Thread(target=self.user_interface)
         ui_thread.start()
 
-        self.should_continue = False
         while self.should_continue:
 
             # Check for messages to deliver
