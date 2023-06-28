@@ -16,16 +16,20 @@ class TgwuiApi(ChatApi):
         self.message_template = '<from>: <message>'
 
 
-    def send(self, message:str, max_tokens:int = 200, timeout:int = 120, temp:float= 0.5) -> str:
+    def send(self, messages:list, max_tokens:int = 200, timeout:int = 120, temp:float= 0.5) -> str:
 
-        super().send(message, max_tokens, timeout)
+        super().send(messages, max_tokens, timeout)
 
         response = ''
 
         uri = f'{self.host}:{self.port}{self.ENDPOINT_GENERATE}'
 
+        prompt = ''
+        for message in messages:
+            prompt += f"{message['message']}\n\n"
+
         post = {
-            'prompt': message,
+            'prompt': prompt,
             'temperature': float(temp)
         }
         reply = requests.post(uri, json=post, timeout=timeout)
