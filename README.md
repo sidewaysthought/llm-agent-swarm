@@ -22,3 +22,19 @@ Agent Swarm is a collection of Python scripts that are intended to act as a vers
 
 ## Getting Started
 Coming after I create templates and have code that won't eat your homework.
+
+## Information Output
+
+By default, a wealth of information is printed to the console. Specifically, info, warning, critical, and error messages are displayed to the console. Output is also sent to log files. For more information, see [the Logging README](logs/README.md).
+
+Using ```--debug``` when running the script enables descriptive information about what is happening under the hood, which can be useful for development and troubleshooting.
+
+Windows and compatable systems:
+```
+.\run_agent_swarm.bat --debug
+```
+
+Linux and Unix shells
+```
+./run_agent_swarm.sh --debug
+```

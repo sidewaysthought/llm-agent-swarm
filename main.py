@@ -1,4 +1,6 @@
+import argparse
 import json
+import logging
 import os
 import threading
 import queue
@@ -36,10 +38,10 @@ class AgentSwarm():
         self.CHAT_API_OPENAI_COMPLETION = 'openai_completion'
         self.CHAT_API_OPENAI_CHAT = 'openai_chat'
         self.SYSTEM_NAME = 'System'
-        
 
         # Utilities and data
         load_dotenv()
+        self.setup_arg_parser()
         self.configuration = configuration
         self.msg_no_agent_named = str(self.configuration.get_property('redirect_failure_string'))
         self.user_string = str(self.configuration.get_property('user_string'))
@@ -48,6 +50,9 @@ class AgentSwarm():
         self.project = str(self.configuration.get_project())
         self.session_id = self.generate_session_id()
         self.lang_processor = spacy.load("en_core_web_sm")
+
+        # Logging
+        self.logger = logging.getLogger(__name__)
 
         # Command management
         self.command_controller = Commands()
@@ -61,6 +66,18 @@ class AgentSwarm():
         self.should_continue = True
 
         self.start_loop()
+
+
+    def setup_arg_parser(self):
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--debug", help="Enable debug logging", action="store_true")
+        args = parser.parse_args()
+
+        if args.debug:
+            logging.basicConfig(level=logging.DEBUG)
+        else:
+            logging.basicConfig(level=logging.WARNING)
 
 
     def generate_session_id(self) -> str:
