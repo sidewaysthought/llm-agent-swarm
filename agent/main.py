@@ -102,7 +102,7 @@ class Agent:
         """
         
         reply = ''
-        api_message = None
+        api_message = []
         context_size = self.chat_api.get_context_size()
 
         # If the messages list is not empty...
@@ -135,7 +135,6 @@ class Agent:
             if token_length > context_size:
                 raise Exception('Starting prompt is too long to send to API.')
             
-            # Get memories based on the last two messages
             if len(messages) > 2:
                 # Recall based on the last two messages
                 memories = self.memory.recall(messages[-2:])
@@ -160,11 +159,15 @@ class Agent:
                 if len(messages) > 2:
                     # Get token length of first and last, subtract from context size
                     middle_token_length = self.chat_api.get_context_size() - (messages[0]['tokens'] + messages[-1]['tokens'])
-                    api_message = [messages[0]] + self.summarize(messages[1:-2], middle_token_length) + messages[-1:]
+                    api_message.append(messages[0])
+                    api_message.append(self.summarize(messages[1:-1], middle_token_length))
+                    api_message.append(messages[-1])
                 elif len(messages) > 1:
                     # Get the length of the first and last two messages, subtract from context size
                     middle_token_length = self.chat_api.get_context_size() - (messages[0]['tokens'] + messages[-2]['tokens'] + messages[-1]['tokens'])
-                    api_message = [messages[0]] + self.summarize(messages[1:-1], middle_token_length) + messages[-2:]
+                    api_message.append(messages[0])
+                    api_message.append(self.summarize(messages[1:-2], middle_token_length))
+                    api_message += messages[-2:]
                 else:
                     raise Exception('Starting prompt plus last message is too long to send to API.')
             else:
