@@ -16,7 +16,7 @@ class ChatApi:
         self.message_template = ''
 
 
-    def send(self, message:str|list|dict, max_tokens:int = 200, timeout:int = 120, temp=0.01) -> str:
+    def send(self, message, max_tokens:int = 200, timeout:int = 120, temp=0.01) -> str:
 
         return ''
     
