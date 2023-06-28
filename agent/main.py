@@ -404,12 +404,9 @@ class Agent:
             if key not in message_obj or message_obj[key] is None:
                 raise Exception('message_obj must have a ' + key + ' field.')
 
-        try:
-            del new_memory['tokens']
-        except:
-            pass
-
         new_memory = message_obj.copy()
+        if new_memory['tokens']:
+            del new_memory['tokens']
         memory_uri = self.memory.remember(new_memory)
 
         return memory_uri
