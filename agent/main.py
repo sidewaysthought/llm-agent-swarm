@@ -430,13 +430,14 @@ class Agent:
 
         if messages:
             response = self.RESPONSE_TEMPLATE.copy()
-            search_terms = ''
+            search_terms = messages
             recalled_messages = []
             token_count = 0
             search_results = []
             max_tokens = self.chat_api.get_context_size()
-            for message in messages:
-                search_terms += message['message'] + '\n'
+            for term in search_terms:
+                if term['tokens']:
+                    del term['tokens']
             recalled_messages = self.memory.recall(search_terms)
 
             for message in recalled_messages:
