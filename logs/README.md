@@ -18,7 +18,7 @@ The following logs are created:
     * Error and Critical messages are also displayed to the console
 * ```debug_<date>_<number>.log```
     * Contains debug messages
-    * Debug messages only shown on the console with --debug flag
+    * Debug messages only logged with --debug flag
 
 Logs are tab delimited.
 
