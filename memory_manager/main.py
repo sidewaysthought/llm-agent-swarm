@@ -41,12 +41,12 @@ class MemoryManager:
         return memory_uri
     
 
-    def recall(self, search_term:str = '') -> list:
+    def recall(self, search_terms:list) -> list:
         """
         Recall a message.
 
         Args:
-            search_term (str, optional): The search term. Defaults to ''.
+            search_term (str): The search term.
 
         Returns:
             str: The message if found, empty string otherwise.
@@ -54,15 +54,16 @@ class MemoryManager:
 
         results = []
 
-        for memory_uri, predicate, _ in self.graph.triples((None, None, Literal(search_term))):
-            memory_id = str(memory_uri).split("/")[-1]
-            self.usage_counter[memory_id] += 1
-            memory = {}
-            keys = [str(predicate).split("/")[-1] for predicate in self.graph.predicates(subject=memory_uri)]
-            for key in keys:
-                predicate = URIRef(str(self.namespace) + key)
-                memory[key] = str(self.graph.value(subject=memory_uri, predicate=predicate))
-            results.append(memory)
+        for search_term in search_terms:
+            for memory_uri, predicate, _ in self.graph.triples((None, None, Literal(search_term))):
+                memory_id = str(memory_uri).split("/")[-1]
+                self.usage_counter[memory_id] += 1
+                memory = {}
+                keys = [str(predicate).split("/")[-1] for predicate in self.graph.predicates(subject=memory_uri)]
+                for key in keys:
+                    predicate = URIRef(str(self.namespace) + key)
+                    memory[key] = str(self.graph.value(subject=memory_uri, predicate=predicate))
+                results.append(memory)
 
         self.prune()
 
