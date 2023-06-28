@@ -17,6 +17,7 @@ from commands.main import Commands
 from config_manager.main import ConfigManager
 from colorama import Fore, Back, Style
 from dotenv import load_dotenv
+from logger.main import LoggerConfig
 
 class AgentSwarm():
     """
@@ -40,20 +41,29 @@ class AgentSwarm():
         self.CHAT_API_OPENAI_CHAT = 'openai_chat'
         self.SYSTEM_NAME = 'System'
 
-        # Utilities and data
-        load_dotenv()
+        # Variables
+        self.debug_enabled = False
+
+        # Arguments
         self.setup_arg_parser()
+
+        # Logging
+        self.debug_enabled = False
+        logger_config = LoggerConfig(self.debug_enabled)
+        self.logger = logger_config.setup_logger()
+
+        # Configuration
+        load_dotenv()
         self.configuration = configuration
         self.msg_no_agent_named = str(self.configuration.get_property('redirect_failure_string'))
         self.user_string = str(self.configuration.get_property('user_string'))
         self.bot_string = str(self.configuration.get_property('bot_string'))
         self.sign_on_template = str(self.configuration.get_property('sign_on_template'))
         self.project = str(self.configuration.get_project())
+
+        # Utilities and data
         self.session_id = self.generate_session_id()
         self.lang_processor = spacy.load("en_core_web_sm")
-
-        # Logging
-        self.logger = self.setup_logger()
 
         # Command management
         self.command_controller = Commands()
@@ -66,10 +76,6 @@ class AgentSwarm():
         self.message_queue = queue.Queue()
         self.should_continue = True
 
-        # Runtime variables
-        self.log_count = 1
-        self.debug_enabled = False
-
         self.start_loop()
 
 
@@ -81,43 +87,6 @@ class AgentSwarm():
 
         if args.debug:
             self.debug_enabled = True
-
-    
-    def setup_logger(self):
-
-        logger = logging.getLogger(__name__)
-        current_date = datetime.datetime.now().strftime('%Y-%m-%d')
-
-        if self.debug_enabled:
-            logger.setLevel(logging.DEBUG)
-        else:
-            logger.setLevel(logging.INFO)
-
-        info_formatter = logging.Formatter('%(datetime)s\t%(eventtype)s\t%(issuer)s\t%(message)s')
-        conv_formatter = logging.Formatter('%(datetime)s\t%(id)s\t%(from)s\t%(to)s\t%(message)s')
-
-        info_handler = logging.FileHandler(f'info_{current_date}_{self.log_count}.log')
-        info_handler.setLevel(logging.INFO)
-        info_handler.setFormatter(info_formatter)
-
-        error_handler = logging.FileHandler(f'error_{current_date}_{self.log_count}.log')
-        error_handler.setLevel(logging.ERROR)
-        error_handler.setFormatter(info_formatter)
-
-        debug_handler = logging.FileHandler(f'debug_{current_date}_{self.log_count}.log')
-        debug_handler.setLevel(logging.DEBUG)
-        debug_handler.setFormatter(info_formatter)
-
-        conv_handler = logging.FileHandler(f'conversations_{current_date}_{self.log_count}.log')
-        conv_handler.setLevel(logging.INFO)
-        conv_handler.setFormatter(conv_formatter)
-
-        logger.addHandler(info_handler)
-        logger.addHandler(error_handler)
-        logger.addHandler(debug_handler)
-        logger.addHandler(conv_handler)
-
-        return logger
 
 
     def generate_session_id(self) -> str:
