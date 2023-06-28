@@ -470,7 +470,9 @@ class Agent:
                     ogm.append(message)
                 reply = self.send_to_api(ogm)
                 self.add_to_outbound_queue(reply, from_name)
-            del self.inbound_queue[from_name]
+            terms = self.inbound_queue.keys()
+            for term in terms:
+                del self.inbound_queue[term]
 
         
         
